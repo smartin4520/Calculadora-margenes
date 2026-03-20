@@ -9,13 +9,58 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
-body { font-family: Arial; background:#f5f7f9; padding:20px; }
-.container { max-width:900px; margin:auto; background:white; padding:20px; border-radius:10px; }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-input, select { padding:8px; width:100%; }
-button { margin-top:10px; padding:12px; background:#2e7d32; color:white; border:none; }
-.resultado { margin-top:20px; padding:15px; background:#e8f5e9; }
-canvas { margin-top:20px; }
+body {
+  font-family: Arial;
+  background: #f5f7f9;
+  padding: 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+h2 {
+  color: #2e7d32;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+input, select {
+  padding: 10px;
+  width: 100%;
+}
+
+button {
+  margin-top: 10px;
+  padding: 12px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.resultado {
+  margin-top: 20px;
+  padding: 20px;
+  background: #e8f5e9;
+  border-radius: 8px;
+}
+
+canvas {
+  margin-top: 25px;
+}
+
+.positivo { color: green; font-weight: bold; }
+.negativo { color: red; font-weight: bold; }
+
 </style>
 </head>
 
@@ -23,12 +68,14 @@ canvas { margin-top:20px; }
 
 <div class="container">
 
-<h2>Simulador de Márgenes Agrícolas</h2>
+<h2>🌱 Simulador de Rentabilidad Agrícola</h2>
+<p style="color:gray;">Análisis de márgenes por cultivo</p>
 
 <label>Cliente</label>
-<input id="cliente">
+<input id="cliente" placeholder="Nombre del cliente">
 
 <div class="grid">
+
 <select id="zona">
 <option value="norte">Norte BA</option>
 <option value="sur">Sur BA</option>
@@ -53,6 +100,7 @@ canvas { margin-top:20px; }
 
 <input type="number" id="rinde" placeholder="Rinde qq/ha">
 <input type="number" id="precio" placeholder="Precio USD/tn">
+
 </div>
 
 <button onclick="calcular()">Calcular</button>
@@ -62,6 +110,8 @@ canvas { margin-top:20px; }
 
 <canvas id="lineChart"></canvas>
 <canvas id="heatmap"></canvas>
+
+<p><b>Referencia:</b> 🔴 negativo | 🟠 medio | 🟢 alto</p>
 
 </div>
 
@@ -87,23 +137,46 @@ const rinde = parseFloat(document.getElementById("rinde").value);
 const precio = parseFloat(document.getElementById("precio").value);
 const cliente = document.getElementById("cliente").value;
 
-const rinde_tn = rinde/10;
+if(!rinde || !precio){
+  alert("Completá rinde y precio");
+  return;
+}
+
+const rinde_tn = rinde / 10;
 
 const costo1 = obtenerCosto(zona,cultivo);
 const costo2 = obtenerCosto(zona,cultivo2);
 
-const margen1 = rinde_tn*precio - costo1;
-const margen2 = rinde_tn*precio - costo2;
+const margen1 = rinde_tn * precio - costo1;
+const margen2 = rinde_tn * precio - costo2;
 
-let recomendacion = margen1>margen2 ?
-`Conviene ${cultivo} por +${(margen1-margen2).toFixed(0)}` :
-`Conviene ${cultivo2} por +${(margen2-margen1).toFixed(0)}`;
+// Break-even
+const breakeven1 = costo1 / rinde_tn;
+const breakeven2 = costo2 / rinde_tn;
 
-document.getElementById("resultado").innerHTML =
-`Cliente: ${cliente}<br>
-${cultivo}: ${margen1.toFixed(0)} USD/ha<br>
-${cultivo2}: ${margen2.toFixed(0)} USD/ha<br>
-Recomendación: ${recomendacion}`;
+// Recomendación
+let recomendacion = "";
+if(margen1 > margen2){
+  recomendacion = `Conviene ${cultivo.toUpperCase()} por +USD ${(margen1-margen2).toFixed(0)}/ha`;
+} else {
+  recomendacion = `Conviene ${cultivo2.toUpperCase()} por +USD ${(margen2-margen1).toFixed(0)}/ha`;
+}
+
+document.getElementById("resultado").innerHTML = `
+<b>Cliente:</b> ${cliente || "No especificado"}<br><br>
+
+<b>${cultivo.toUpperCase()}</b>: USD ${margen1.toFixed(0)} /ha<br>
+Break-even: USD ${breakeven1.toFixed(0)} /tn<br><br>
+
+<b>${cultivo2.toUpperCase()}</b>: USD ${margen2.toFixed(0)} /ha<br>
+Break-even: USD ${breakeven2.toFixed(0)} /tn<br><br>
+
+<b>Diferencia:</b> USD ${(margen1-margen2).toFixed(0)} /ha<br><br>
+
+<div style="font-size:20px;" class="${margen1>margen2 ? 'positivo':'negativo'}">
+✔ ${recomendacion}
+</div>
+`;
 
 generarLinea(rinde_tn,precio,costo1,costo2,cultivo,cultivo2);
 generarHeatmap(rinde,precio,costo1);
@@ -124,10 +197,13 @@ if(lineChart) lineChart.destroy();
 
 lineChart = new Chart(document.getElementById("lineChart"),{
 type:'line',
-data:{labels:precios,datasets:[
+data:{
+labels:precios,
+datasets:[
 {label:cultivo,data:m1},
 {label:cultivo2,data:m2}
-]}
+]
+}
 });
 
 }
@@ -149,7 +225,7 @@ type:'matrix',
 data:{datasets:[{
 data:data,
 backgroundColor:ctx=>{
-const v=ctx.raw.v;
+const v = ctx.raw.v;
 if(v<0) return 'red';
 if(v<200) return 'orange';
 return 'green';
@@ -160,7 +236,7 @@ return 'green';
 }
 
 function exportarPDF(){
-html2pdf().from(document.querySelector(".container")).save("margen.pdf");
+html2pdf().from(document.querySelector(".container")).save("simulacion_margen.pdf");
 }
 
 </script>
