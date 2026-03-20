@@ -96,8 +96,8 @@ const margen1 = rinde_tn*precio - costo1;
 const margen2 = rinde_tn*precio - costo2;
 
 let recomendacion = margen1>margen2 ?
-Conviene ${cultivo} por +${(margen1-margen2).toFixed(0)} :
-Conviene ${cultivo2} por +${(margen2-margen1).toFixed(0)};
+`Conviene ${cultivo} por +${(margen1-margen2).toFixed(0)}` :
+`Conviene ${cultivo2} por +${(margen2-margen1).toFixed(0)}`;
 
 document.getElementById("resultado").innerHTML =
 `Cliente: ${cliente}<br>
