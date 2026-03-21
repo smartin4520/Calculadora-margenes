@@ -248,7 +248,7 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
         </div>
         <div class="card">
           <div class="tline tline-amber"></div>
-          <div class="chart-hdr"><div><div class="chart-ttl">Mapa de calor</div><div class="chart-sub">Rendimiento × Precio → USD/ha</div></div><div class="chart-badge">GRADIENTE</div></div>
+          <div class="chart-hdr"><div><div class="chart-ttl">Mapa de calor</div><div class="chart-sub" id="heatmapSub">Rendimiento × Precio → USD/ha</div></div><div class="chart-badge">GRADIENTE</div></div>
           <canvas id="heatmap"></canvas>
           <div class="hm-legend"><span class="hm-label-l">PÉRDIDA</span><div class="hm-grad"></div><span class="hm-label-r">GANANCIA</span></div>
         </div>
@@ -395,10 +395,22 @@ function resetear(){
   resetearSilencioso();
 }
 
+// Rangos fijos por cultivo para heatmap y línea
+const RANGOS={
+  soja:   {pMin:250, pMax:400, pStep:10, rMin:15, rMax:55, rStep:5},
+  maiz:   {pMin:140, pMax:240, pStep:10, rMin:50, rMax:120,rStep:10},
+  trigo:  {pMin:160, pMax:280, pStep:10, rMin:20, rMax:65, rStep:5},
+  colza:  {pMin:340, pMax:560, pStep:20, rMin:12, rMax:42, rStep:5},
+  girasol:{pMin:280, pMax:480, pStep:20, rMin:10, rMax:40, rStep:5},
+  doble:  {pMin:200, pMax:340, pStep:10, rMin:50, rMax:115,rStep:10},
+};
+function getRangos(c){return RANGOS[c]||{pMin:200,pMax:500,pStep:20,rMin:15,rMax:80,rStep:5};}
+
 function generarLinea(cultivo,rinde,pBase){
   const labels=[],data=[];
   const pbe=getCostos(cultivo)/(rinde/10);
-  for(let i=0;i<=30;i++){const p=pBase*(0.5+i*(1.0/30));labels.push(Math.round(p));data.push(+margen(cultivo,rinde,p).toFixed(1));}
+  const{pMin,pMax,pStep}=getRangos(cultivo);
+  for(let p=pMin;p<=pMax;p+=pStep){labels.push(p);data.push(+margen(cultivo,rinde,p).toFixed(1));}
   if(lineChart)lineChart.destroy();
   const ctx=document.getElementById('lineChart').getContext('2d');
   const col=CROP_COLOR[cultivo]||'#4a9eff';
@@ -437,22 +449,45 @@ function marginColor(v,vMin,vMax){
   return `rgba(${Math.round(c.r)},${Math.round(c.g)},${Math.round(c.b)},0.9)`;
 }
 
+// Rangos fijos por cultivo: {pMin, pMax, pStep, rMin, rMax, rStep}
+const HEATMAP_RANGES = {
+  soja:   { pMin:250, pMax:400, pStep:10, rMin:15, rMax:55, rStep:5  },
+  maiz:   { pMin:130, pMax:250, pStep:10, rMin:40, rMax:120,rStep:10 },
+  trigo:  { pMin:150, pMax:290, pStep:10, rMin:20, rMax:65, rStep:5  },
+  colza:  { pMin:320, pMax:560, pStep:20, rMin:10, rMax:45, rStep:5  },
+  girasol:{ pMin:270, pMax:480, pStep:20, rMin:10, rMax:40, rStep:5  },
+  doble:  { pMin:180, pMax:360, pStep:15, rMin:40, rMax:115,rStep:10 },
+};
+
+function rangoArray(min, max, step) {
+  const arr = [];
+  for (let v = min; v <= max; v += step) arr.push(+v.toFixed(2));
+  return arr;
+}
+
 function generarHeatmap(cultivo,rBase,pBase){
-  const NR=9,NP=9,rindes=[],precios=[],data=[];
-  for(let i=0;i<NR;i++)rindes.push(+(rBase*(0.60+i*0.10)).toFixed(1));
-  for(let i=0;i<NP;i++)precios.push(+(pBase*(0.60+i*0.10)).toFixed(0));
+  const sub = document.getElementById('heatmapSub');
+  if (sub) {
+    const rng0 = HEATMAP_RANGES[cultivo];
+    if (rng0) sub.textContent = `Rinde ${rng0.rMin}–${rng0.rMax} qq · Precio USD ${rng0.pMin}–${rng0.pMax}/tn`;
+  }
+  const rng = HEATMAP_RANGES[cultivo] || { pMin:pBase*0.6, pMax:pBase*1.4, pStep:Math.round(pBase*0.08), rMin:rBase*0.5, rMax:rBase*1.5, rStep:Math.round(rBase*0.1) };
+  const rindes  = rangoArray(rng.rMin, rng.rMax, rng.rStep);
+  const precios = rangoArray(rng.pMin, rng.pMax, rng.pStep);
+  const data=[];
   let vMin=Infinity,vMax=-Infinity;
   for(const r of rindes)for(const p of precios){const v=+margen(cultivo,r,p).toFixed(0);data.push({x:p,y:r,v});if(v<vMin)vMin=v;if(v>vMax)vMax=v;}
   if(heatmapChart){heatmapChart.destroy();heatmapChart=null;}
   const ctx=document.getElementById('heatmap').getContext('2d');
   const xL=[...new Set(data.map(d=>d.x))].sort((a,b)=>a-b);
   const yL=[...new Set(data.map(d=>d.y))].sort((a,b)=>a-b);
+  const NP2=xL.length, NR2=yL.length;
   const hp={id:'heatDraw',beforeDatasetsDraw(chart){
     const{ctx:c,chartArea:{left,right,top,bottom}}=chart;
-    const cw=(right-left)/xL.length,ch=(bottom-top)/yL.length;
+    const cw=(right-left)/NP2,ch=(bottom-top)/NR2;
     for(const d of data){
       const xi=xL.indexOf(d.x),yi=yL.indexOf(d.y);
-      const px=left+xi*cw,py=top+(yL.length-1-yi)*ch;
+      const px=left+xi*cw,py=top+(NR2-1-yi)*ch;
       c.fillStyle=marginColor(d.v,vMin,vMax);c.fillRect(px+1,py+1,cw-2,ch-2);
       const fs=Math.max(7,Math.min(11,cw*0.22));
       c.font=`600 ${fs}px IBM Plex Mono,monospace`;
