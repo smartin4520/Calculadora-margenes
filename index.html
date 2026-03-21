@@ -2,240 +2,701 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Simulador de Rentabilidad</title>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.2.0"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimAgro PRO — Calculadora de Márgenes</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@1.3.0/dist/chartjs-chart-matrix.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 
 <style>
+:root {
+  --bg:        #0b0f07;
+  --surface:   #12180b;
+  --card:      #161d0e;
+  --card2:     #1a2211;
+  --border:    #263018;
+  --border2:   #344020;
+  --accent:    #9ecf2a;
+  --accent2:   #b8e63c;
+  --amber:     #e8a825;
+  --amber2:    #f5c040;
+  --red:       #d64e3a;
+  --muted:     #4d6030;
+  --text:      #cfe0a0;
+  --text-dim:  #6b8040;
+  --text-faint:#3a4d20;
+  --mono:      'IBM Plex Mono', monospace;
+  --display:   'Barlow Condensed', sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
 body {
-  font-family: Arial;
-  background: #eef2f5;
-  margin: 0;
+  font-family: var(--display);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size:48px 48px;
+  opacity:.3;
+  pointer-events:none;
+  z-index:0;
 }
 
-.header {
-  background: #1b5e20;
-  color: white;
-  padding: 20px;
-  text-align: center;
+/* HEADER */
+header {
+  position:relative;
+  z-index:10;
+  background:linear-gradient(180deg,#101508 0%,transparent 100%);
+  border-bottom:1px solid var(--border2);
+  padding:0 48px;
+  display:flex;
+  align-items:stretch;
+  height:72px;
+  gap:0;
+}
+.header-logo {
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding-right:28px;
+  border-right:1px solid var(--border2);
+}
+.logo-icon {
+  width:36px;height:36px;
+  background:var(--accent);
+  border-radius:3px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.logo-text {
+  font-family:var(--display);
+  font-weight:900;
+  font-size:22px;
+  letter-spacing:1px;
+  color:var(--text);
+}
+.logo-text em { color:var(--accent); font-style:normal; }
+.logo-text small { color:var(--text-dim); font-weight:300; font-size:14px; letter-spacing:0; }
+.header-tagline {
+  display:flex;align-items:center;
+  padding:0 28px;
+  font-family:var(--mono);
+  font-size:10px;color:var(--text-dim);
+  letter-spacing:1px;
+  border-right:1px solid var(--border2);
+}
+.header-status {
+  display:flex;align-items:center;gap:6px;
+  padding:0 20px;
+  font-family:var(--mono);font-size:10px;color:var(--muted);
+}
+.dot-live {
+  width:7px;height:7px;border-radius:50%;
+  background:var(--accent);
+  animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.header-right {
+  margin-left:auto;
+  display:flex;align-items:center;gap:28px;
+  padding-left:20px;
+}
+.hprice .crop{font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:2px;}
+.hprice .val {font-family:var(--mono);font-size:13px;font-weight:600;color:var(--amber);}
+
+/* LAYOUT */
+main {
+  position:relative;z-index:1;
+  max-width:1240px;margin:0 auto;
+  padding:32px 48px 64px;
+  display:flex;flex-direction:column;gap:24px;
 }
 
-.container {
-  max-width: 1000px;
-  margin: auto;
-  padding: 20px;
+/* SECTION TITLE */
+.sec {
+  font-family:var(--mono);font-size:9px;
+  letter-spacing:3px;text-transform:uppercase;
+  color:var(--text-dim);
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:8px;
 }
+.sec::after{content:'';flex:1;height:1px;background:var(--border2);}
 
+/* CARD */
 .card {
-  background: white;
-  padding: 20px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:6px;
+  padding:28px 32px;
+  position:relative;
+  overflow:hidden;
 }
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: 15px;
+.tline {
+  position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--accent) 0%,transparent 55%);
 }
+.tline-amber { background:linear-gradient(90deg,var(--amber) 0%,transparent 55%); }
+.tline-red   { background:linear-gradient(90deg,var(--red) 0%,transparent 55%); }
 
-input, select {
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+/* INPUTS */
+.inputs-row {
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:24px;
+  align-items:start;
 }
-
-button {
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
-  background: #2e7d32;
-  color: white;
-  cursor: pointer;
-  font-weight: bold;
+.inputs-row.two-crops {
+  grid-template-columns:1fr 1px 1fr auto;
 }
-
-.resultado {
-  text-align: center;
+.cultivo-block{display:flex;flex-direction:column;gap:14px;}
+.block-header{display:flex;align-items:center;gap:12px;padding-bottom:12px;border-bottom:1px solid var(--border2);}
+.block-num{
+  width:26px;height:26px;border-radius:2px;
+  background:var(--accent);color:var(--bg);
+  font-family:var(--mono);font-size:12px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;
 }
-
-.margen {
-  font-size: 32px;
-  font-weight: bold;
+.block-num.am{background:var(--amber);}
+.block-ttl{font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+.fgroup{display:flex;flex-direction:column;gap:6px;}
+label{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+select,input[type=number]{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  color:var(--text);
+  padding:10px 14px;
+  font-family:var(--mono);font-size:13px;
+  border-radius:3px;outline:none;width:100%;
+  transition:border-color .2s,box-shadow .2s;
+  -webkit-appearance:none;appearance:none;
 }
-
-.recomendacion {
-  font-size: 20px;
-  margin-top: 10px;
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234d6030'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  padding-right:32px;cursor:pointer;
 }
+select:focus,input[type=number]:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(158,207,42,.08);
+}
+input::placeholder{color:var(--text-faint);}
+input::-webkit-inner-spin-button{opacity:0;}
 
-canvas {
-  margin-top: 20px;
+.divider-col{width:1px;background:var(--border2);align-self:stretch;margin-top:42px;}
+
+.actions-col{display:flex;flex-direction:column;gap:10px;padding-top:42px;}
+button{
+  font-family:var(--display);font-weight:700;
+  font-size:13px;letter-spacing:2px;text-transform:uppercase;
+  padding:13px 24px;border:none;border-radius:3px;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-calc{background:var(--accent);color:var(--bg);}
+.btn-calc:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 16px rgba(158,207,42,.25);}
+.btn-cmp{background:transparent;color:var(--amber);border:1px solid var(--amber);}
+.btn-cmp:hover{background:rgba(232,168,37,.08);transform:translateY(-1px);}
+.btn-cmp.active{background:rgba(232,168,37,.12);}
+.btn-rst{background:transparent;color:var(--muted);border:1px solid var(--border2);font-size:11px;padding:10px 20px;}
+.btn-rst:hover{border-color:var(--text-dim);color:var(--text-dim);}
+
+/* METRICS */
+#resultado{display:none;}
+.result-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;}
+.metric{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:4px;padding:20px 24px;position:relative;overflow:hidden;
+  animation:slideUp .35s ease both;
+}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.metric.pos::before{background:var(--accent);}
+.metric.neg::before{background:var(--red);}
+.metric.neu::before{background:var(--amber);}
+.metric.inf::before{background:var(--text-dim);}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.metric:nth-child(1){animation-delay:.00s}
+.metric:nth-child(2){animation-delay:.05s}
+.metric:nth-child(3){animation-delay:.10s}
+.metric:nth-child(4){animation-delay:.15s}
+.metric:nth-child(5){animation-delay:.20s}
+.mlbl{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.mval{font-family:var(--mono);font-size:26px;font-weight:600;line-height:1;margin-bottom:5px;}
+.mval.pos{color:var(--accent);}
+.mval.neg{color:var(--red);}
+.mval.neu{color:var(--amber);}
+.mval.inf{color:var(--text);}
+.mnote{font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+/* CHARTS */
+#graficos{display:none;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.chart-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+.chart-ttl{font-size:16px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text);margin-bottom:3px;}
+.chart-sub{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.chart-badge{
+  font-family:var(--mono);font-size:9px;letter-spacing:1px;
+  padding:4px 10px;border-radius:2px;
+  background:var(--surface);border:1px solid var(--border2);color:var(--text-dim);
+}
+.hm-legend{display:flex;gap:18px;margin-top:12px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:7px;}
+.leg-sq{width:10px;height:10px;border-radius:1px;}
+
+/* COSTOS */
+.costos-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:var(--border);border-radius:4px;overflow:hidden;
+}
+.costo-cell{
+  background:var(--surface);padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.costo-cell.total-row{background:var(--card2);}
+.cname{font-size:14px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);}
+.cname.total{color:var(--text);}
+.cval{font-family:var(--mono);font-size:13px;color:var(--amber);font-weight:600;}
+.cval.total{color:var(--accent2);font-size:15px;}
+
+footer{
+  position:relative;z-index:1;
+  text-align:center;padding:20px 48px 32px;
+  font-family:var(--mono);font-size:9px;color:var(--text-faint);
+  letter-spacing:1px;border-top:1px solid var(--border);
 }
 </style>
 </head>
-
 <body>
 
-<div class="header">
-  <h1>Simulador de Rentabilidad Agrícola</h1>
-</div>
+<header>
+  <div class="header-logo">
+    <div class="logo-icon">🌾</div>
+    <div class="logo-text"><em>SIM</em>AGRO <small>PRO</small></div>
+  </div>
+  <div class="header-tagline">CALCULADORA DE MÁRGENES · CAMPAÑA 2025/26</div>
+  <div class="header-status"><div class="dot-live"></div>ACTIVO</div>
+  <div class="header-right">
+    <div class="hprice"><div class="crop">SOJA</div><div class="val">USD 340/tn</div></div>
+    <div class="hprice"><div class="crop">MAÍZ</div><div class="val">USD 185/tn</div></div>
+    <div class="hprice"><div class="crop">TRIGO</div><div class="val">USD 220/tn</div></div>
+    <div class="hprice"><div class="crop">GIRASOL</div><div class="val">USD 390/tn</div></div>
+  </div>
+</header>
 
-<div class="container">
+<main>
 
-<div class="card">
+  <!-- 01 INPUTS -->
+  <div>
+    <div class="sec">01 &nbsp; Configuración del análisis</div>
+    <div class="card">
+      <div class="tline" id="inputTline"></div>
+      <div class="inputs-row" id="inputsRow">
 
-<h3>Datos de entrada</h3>
+        <div class="cultivo-block">
+          <div class="block-header">
+            <div class="block-num">A</div>
+            <div class="block-ttl">Cultivo principal</div>
+          </div>
+          <div class="fgroup">
+            <label>Cultivo</label>
+            <select id="cultivo1" onchange="onCultivoChange()">
+              <option value="soja">Soja</option>
+              <option value="maiz">Maíz</option>
+              <option value="trigo">Trigo</option>
+              <option value="colza">Colza</option>
+              <option value="girasol">Girasol</option>
+              <option value="doble">Doble cultivo — Trigo / Soja 2ª</option>
+            </select>
+          </div>
+          <div class="fgroup">
+            <label>Rendimiento (qq/ha)</label>
+            <input type="number" id="rinde1" placeholder="ej: 35" min="0" step="0.5">
+          </div>
+          <div class="fgroup">
+            <label>Precio de venta (USD/tn)</label>
+            <input type="number" id="precio1" placeholder="ej: 340" min="0" step="5">
+          </div>
+          <div class="fgroup">
+            <label>Superficie (ha) — opcional</label>
+            <input type="number" id="sup1" placeholder="ej: 100" min="0">
+          </div>
+        </div>
 
-<div class="grid">
-<input id="cliente" placeholder="Cliente">
+        <div class="divider-col" id="divCol" style="display:none"></div>
 
-<select id="zona">
-<option value="norte">Norte BA</option>
-<option value="sur">Sur BA</option>
-<option value="cordoba">Córdoba</option>
-</select>
+        <div class="cultivo-block" id="block2" style="display:none">
+          <div class="block-header">
+            <div class="block-num am">B</div>
+            <div class="block-ttl">Cultivo comparado</div>
+          </div>
+          <div class="fgroup">
+            <label>Cultivo</label>
+            <select id="cultivo2">
+              <option value="maiz">Maíz</option>
+              <option value="soja">Soja</option>
+              <option value="trigo">Trigo</option>
+              <option value="colza">Colza</option>
+              <option value="girasol">Girasol</option>
+              <option value="doble">Doble cultivo — Trigo / Soja 2ª</option>
+            </select>
+          </div>
+          <div class="fgroup">
+            <label>Rendimiento (qq/ha)</label>
+            <input type="number" id="rinde2" placeholder="ej: 90" min="0" step="0.5">
+          </div>
+          <div class="fgroup">
+            <label>Precio de venta (USD/tn)</label>
+            <input type="number" id="precio2" placeholder="ej: 185" min="0" step="5">
+          </div>
+          <div class="fgroup">
+            <label>Superficie (ha) — opcional</label>
+            <input type="number" id="sup2" placeholder="ej: 100" min="0">
+          </div>
+        </div>
 
-<select id="cultivo">
-<option value="soja">Soja</option>
-<option value="maiz">Maíz</option>
-<option value="trigo">Trigo</option>
-<option value="colza">Colza</option>
-<option value="girasol">Girasol</option>
-</select>
+        <div class="actions-col">
+          <button class="btn-calc" onclick="calcular()">▶ Calcular</button>
+          <button class="btn-cmp" id="btnCmp" onclick="toggleComparar()">⇄ Comparar</button>
+          <button class="btn-rst" onclick="resetear()">✕ Limpiar</button>
+        </div>
 
-<select id="cultivo2">
-<option value="soja">Soja</option>
-<option value="maiz">Maíz</option>
-<option value="trigo">Trigo</option>
-<option value="colza">Colza</option>
-<option value="girasol">Girasol</option>
-</select>
+      </div>
+    </div>
+  </div>
 
-<input type="number" id="rinde" placeholder="Rinde qq/ha">
-<input type="number" id="precio" placeholder="Precio USD/tn">
-</div>
+  <!-- 02 RESULTADOS -->
+  <div id="resultado">
+    <div class="sec">02 &nbsp; Resultados del análisis</div>
+    <div class="card" id="resCard">
+      <div class="tline" id="resTline"></div>
+      <div id="metricas"></div>
+    </div>
+  </div>
 
-<br>
+  <!-- 03 GRÁFICOS -->
+  <div id="graficos">
+    <div class="sec">03 &nbsp; Análisis de sensibilidad</div>
+    <div class="charts-grid">
+      <div class="card">
+        <div class="tline"></div>
+        <div class="chart-hdr">
+          <div>
+            <div class="chart-ttl">Margen vs. Precio</div>
+            <div class="chart-sub">Sensibilidad ±50% sobre precio base</div>
+          </div>
+          <div class="chart-badge">LÍNEA</div>
+        </div>
+        <canvas id="lineChart"></canvas>
+      </div>
+      <div class="card">
+        <div class="tline tline-amber"></div>
+        <div class="chart-hdr">
+          <div>
+            <div class="chart-ttl">Mapa de calor</div>
+            <div class="chart-sub">Rendimiento × Precio → Margen USD/ha</div>
+          </div>
+          <div class="chart-badge">MATRIX</div>
+        </div>
+        <canvas id="heatmap"></canvas>
+        <div class="hm-legend">
+          <div class="leg-item"><div class="leg-sq" style="background:#d64e3a"></div>PÉRDIDA</div>
+          <div class="leg-item"><div class="leg-sq" style="background:#e8a825"></div>0 – 150</div>
+          <div class="leg-item"><div class="leg-sq" style="background:#9ecf2a"></div>150 – 350</div>
+          <div class="leg-item"><div class="leg-sq" style="background:#4a9a10"></div>+350</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-<button onclick="calcular()">Calcular</button>
-<button onclick="exportarPDF()">Exportar PDF</button>
+  <!-- 04 COSTOS -->
+  <div>
+    <div class="sec">04 &nbsp; Costos directos de referencia · USD/ha · Campaña 2025/26</div>
+    <div class="card">
+      <div class="tline tline-amber"></div>
+      <div class="costos-grid" id="costosGrid"></div>
+      <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:14px;letter-spacing:1px;">
+        * Incluye semillas, fertilización, protección, labranza y cosecha. No incluye arrendamiento ni estructura.
+      </p>
+    </div>
+  </div>
 
-</div>
+</main>
 
-<div class="card resultado" id="resultado"></div>
-
-<div class="card">
-<canvas id="lineChart"></canvas>
-</div>
-
-<div class="card">
-<canvas id="heatmap"></canvas>
-<p>🔴 Negativo | 🟠 Medio | 🟢 Alto</p>
-</div>
-
-</div>
+<footer>SIMAGRO PRO · HERRAMIENTA DE ANÁLISIS AGRONÓMICO · VALORES ORIENTATIVOS — AJUSTAR A CADA ESTABLECIMIENTO</footer>
 
 <script>
-
-let lineChart, heatmapChart;
-
-function obtenerCosto(zona, cultivo){
-const c={
-norte:{soja:550,maiz:750,trigo:650,colza:700,girasol:600},
-sur:{soja:450,maiz:650,trigo:600,colza:650,girasol:550},
-cordoba:{soja:500,maiz:700,trigo:620,colza:680,girasol:580}
+// ═══ DATOS ═══
+const C = {
+  soja:   {nombre:'Soja',          costo:530,  rRef:35,  pRef:340},
+  maiz:   {nombre:'Maíz',          costo:770,  rRef:90,  pRef:185},
+  trigo:  {nombre:'Trigo',         costo:600,  rRef:45,  pRef:220},
+  colza:  {nombre:'Colza',         costo:680,  rRef:28,  pRef:460},
+  girasol:{nombre:'Girasol',       costo:580,  rRef:25,  pRef:390},
+  doble:  {nombre:'Trigo/Soja 2ª', costo:1050, rRef:90,  pRef:270},
 };
-return c[zona][cultivo];
+const DET = {
+  soja:   {semilla:90,  fertilizacion:110, agroquimicos:120, labranza:80, cosecha:130, total:530},
+  maiz:   {semilla:160, fertilizacion:200, agroquimicos:100, labranza:80, cosecha:230, total:770},
+  trigo:  {semilla:70,  fertilizacion:160, agroquimicos:90,  labranza:80, cosecha:200, total:600},
+  colza:  {semilla:80,  fertilizacion:150, agroquimicos:110, labranza:80, cosecha:260, total:680},
+  girasol:{semilla:100, fertilizacion:100, agroquimicos:90,  labranza:80, cosecha:210, total:580},
+  doble:  {semilla:160, fertilizacion:310, agroquimicos:210, labranza:130,cosecha:240, total:1050},
+};
+const NOMBRES = {semilla:'Semillas',fertilizacion:'Fertilización',agroquimicos:'Agroquímicos',labranza:'Labranza & Siembra',cosecha:'Cosecha & Flete',total:'TOTAL'};
+
+let comparando=false, lineChart=null, heatmapChart=null;
+
+// ═══ UTILS ═══
+const margen = (c,r,p) => (r/10)*p - C[c].costo;
+const fmt = v => (v<0?'–':'')+'USD '+Math.abs(v).toLocaleString('es-AR',{maximumFractionDigits:0});
+const cc  = v => v>0?'pos':v<0?'neg':'neu';
+
+// ═══ TOGGLE ═══
+function toggleComparar(){
+  comparando = !comparando;
+  document.getElementById('block2').style.display = comparando?'flex':'none';
+  document.getElementById('divCol').style.display  = comparando?'block':'none';
+  document.getElementById('btnCmp').classList.toggle('active',comparando);
+  document.getElementById('inputsRow').className = comparando?'inputs-row two-crops':'inputs-row';
 }
 
+function onCultivoChange(){
+  const d = C[document.getElementById('cultivo1').value];
+  document.getElementById('rinde1').placeholder  = 'ej: '+d.rRef;
+  document.getElementById('precio1').placeholder = 'ej: '+d.pRef;
+  renderCostos(document.getElementById('cultivo1').value);
+}
+
+// ═══ CALCULAR ═══
 function calcular(){
+  const c1=document.getElementById('cultivo1').value;
+  const r1=parseFloat(document.getElementById('rinde1').value);
+  const p1=parseFloat(document.getElementById('precio1').value);
+  const s1=parseFloat(document.getElementById('sup1').value)||null;
 
-const zona=document.getElementById("zona").value;
-const cultivo=document.getElementById("cultivo").value;
-const cultivo2=document.getElementById("cultivo2").value;
-const rinde=parseFloat(document.getElementById("rinde").value);
-const precio=parseFloat(document.getElementById("precio").value);
+  if(!r1||!p1){alert('Completá rendimiento y precio del cultivo A.');return;}
 
-const rinde_tn=rinde/10;
+  const ing1=+(r1/10*p1).toFixed(1);
+  const cos1=C[c1].costo;
+  const mar1=+(ing1-cos1).toFixed(1);
+  const ren1=((mar1/cos1)*100).toFixed(1);
+  const pbe1=+(cos1/(1/10)*10/r1).toFixed(1); // precio breakeven
 
-const m1=rinde_tn*precio - obtenerCosto(zona,cultivo);
-const m2=rinde_tn*precio - obtenerCosto(zona,cultivo2);
+  let html='';
 
-let mejor = m1>m2 ? cultivo : cultivo2;
-let diff = Math.abs(m1-m2).toFixed(0);
+  if(!comparando){
+    const k=cc(mar1);
+    document.getElementById('resTline').className='tline'+(mar1<0?' tline-red':'');
+    html=`<div class="result-row">
+      <div class="metric inf" style="animation-delay:.00s">
+        <div class="mlbl">Ingreso bruto</div>
+        <div class="mval inf">${fmt(ing1)}</div>
+        <div class="mnote">por hectárea</div>
+      </div>
+      <div class="metric neu" style="animation-delay:.05s">
+        <div class="mlbl">Costos directos</div>
+        <div class="mval neu">${fmt(cos1)}</div>
+        <div class="mnote">campaña 2025/26</div>
+      </div>
+      <div class="metric ${k}" style="animation-delay:.10s">
+        <div class="mlbl">Margen bruto</div>
+        <div class="mval ${k}">${fmt(mar1)}</div>
+        <div class="mnote">por hectárea</div>
+      </div>
+      <div class="metric ${k}" style="animation-delay:.15s">
+        <div class="mlbl">Rentabilidad</div>
+        <div class="mval ${k}">${ren1}%</div>
+        <div class="mnote">sobre costos directos</div>
+      </div>
+      <div class="metric inf" style="animation-delay:.20s">
+        <div class="mlbl">Precio de indiferencia</div>
+        <div class="mval inf">USD ${pbe1}</div>
+        <div class="mnote">precio mínimo de corte</div>
+      </div>
+      ${s1?`<div class="metric ${k}" style="animation-delay:.25s">
+        <div class="mlbl">Margen total — ${s1} ha</div>
+        <div class="mval ${k}">${fmt(mar1*s1)}</div>
+        <div class="mnote">estimado total campo</div>
+      </div>`:''}
+    </div>`;
+  } else {
+    const c2=document.getElementById('cultivo2').value;
+    const r2=parseFloat(document.getElementById('rinde2').value);
+    const p2=parseFloat(document.getElementById('precio2').value);
+    const s2=parseFloat(document.getElementById('sup2').value)||null;
+    if(!r2||!p2){alert('Completá rendimiento y precio del cultivo B.');return;}
 
-document.getElementById("resultado").innerHTML=`
-<div class="margen">USD ${Math.max(m1,m2).toFixed(0)}/ha</div>
-<div class="recomendacion">✔ Conviene ${mejor.toUpperCase()} (+${diff} USD/ha)</div>
-`;
+    const ing2=+(r2/10*p2).toFixed(1);
+    const cos2=C[c2].costo;
+    const mar2=+(ing2-cos2).toFixed(1);
+    const ren2=((mar2/cos2)*100).toFixed(1);
+    const diff=+(mar1-mar2).toFixed(1);
+    const k1=cc(mar1),k2=cc(mar2),kd=cc(diff);
+    const winner=diff>0?C[c1].nombre:diff<0?C[c2].nombre:'Igual resultado';
+    document.getElementById('resTline').className='tline';
+    html=`<div class="result-row">
+      <div class="metric ${k1}">
+        <div class="mlbl">${C[c1].nombre} — Margen</div>
+        <div class="mval ${k1}">${fmt(mar1)}</div>
+        <div class="mnote">Ingreso ${fmt(ing1)} · Costo ${fmt(cos1)}</div>
+      </div>
+      <div class="metric ${k2}">
+        <div class="mlbl">${C[c2].nombre} — Margen</div>
+        <div class="mval ${k2}">${fmt(mar2)}</div>
+        <div class="mnote">Ingreso ${fmt(ing2)} · Costo ${fmt(cos2)}</div>
+      </div>
+      <div class="metric ${kd}">
+        <div class="mlbl">Diferencia A − B</div>
+        <div class="mval ${kd}">${diff>=0?'+':''}${fmt(diff)}</div>
+        <div class="mnote">${winner}${diff!==0?' es más rentable':''}</div>
+      </div>
+      <div class="metric ${k1}">
+        <div class="mlbl">Rentab. ${C[c1].nombre}</div>
+        <div class="mval ${k1}">${ren1}%</div>
+        <div class="mnote">sobre costos directos</div>
+      </div>
+      <div class="metric ${k2}">
+        <div class="mlbl">Rentab. ${C[c2].nombre}</div>
+        <div class="mval ${k2}">${ren2}%</div>
+        <div class="mnote">sobre costos directos</div>
+      </div>
+    </div>`;
+  }
 
-generarLinea(rinde_tn,precio,zona,cultivo,cultivo2);
-generarHeatmap(rinde,precio,zona,cultivo);
+  document.getElementById('metricas').innerHTML=html;
+  document.getElementById('resultado').style.display='block';
+  document.getElementById('graficos').style.display='block';
 
+  generarLinea(c1,r1,p1);
+  generarHeatmap(c1,r1,p1);
+  renderCostos(c1);
 }
 
-function generarLinea(rinde_tn,precio,zona,c1,c2){
-
-const precios=[], d1=[], d2=[];
-
-for(let p=precio*0.5;p<=precio*1.5;p+=10){
-precios.push(p);
-d1.push(rinde_tn*p - obtenerCosto(zona,c1));
-d2.push(rinde_tn*p - obtenerCosto(zona,c2));
+function resetear(){
+  ['rinde1','precio1','sup1','rinde2','precio2','sup2']
+    .forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  document.getElementById('resultado').style.display='none';
+  document.getElementById('graficos').style.display='none';
+  if(lineChart){lineChart.destroy();lineChart=null;}
+  if(heatmapChart){heatmapChart.destroy();heatmapChart=null;}
 }
 
-if(lineChart) lineChart.destroy();
-
-lineChart=new Chart(document.getElementById("lineChart"),{
-type:'line',
-data:{labels:precios,datasets:[
-{label:c1,data:d1},
-{label:c2,data:d2}
-]}
-});
-
+// ═══ LÍNEA ═══
+function generarLinea(cultivo,rinde,pBase){
+  const labels=[],data=[];
+  for(let i=0;i<=20;i++){
+    const p=pBase*(0.5+i*0.05);
+    labels.push('$'+Math.round(p));
+    data.push(+margen(cultivo,rinde,p).toFixed(1));
+  }
+  if(lineChart)lineChart.destroy();
+  const ctx=document.getElementById('lineChart').getContext('2d');
+  const grad=ctx.createLinearGradient(0,0,0,300);
+  grad.addColorStop(0,'rgba(158,207,42,.22)');
+  grad.addColorStop(1,'rgba(158,207,42,0)');
+  lineChart=new Chart(ctx,{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Margen USD/ha',data,
+      borderColor:'#9ecf2a',backgroundColor:grad,
+      borderWidth:2,pointRadius:3,pointBackgroundColor:'#9ecf2a',
+      fill:true,tension:0.35,
+    }]},
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1a2211',borderColor:'#263018',borderWidth:1,
+          titleColor:'#6b8040',bodyColor:'#cfe0a0',
+          bodyFont:{family:'IBM Plex Mono',size:12},
+          callbacks:{label:c=>` Margen: USD ${c.parsed.y.toLocaleString('es-AR')}/ha`}
+        }
+      },
+      scales:{
+        x:{ticks:{color:'#4d6030',font:{family:'IBM Plex Mono',size:9},maxTicksLimit:8},grid:{color:'#1e2a12'}},
+        y:{ticks:{color:'#4d6030',font:{family:'IBM Plex Mono',size:9},
+          callback:v=>'USD '+v.toLocaleString('es-AR')},grid:{color:'#1e2a12'}}
+      }
+    }
+  });
 }
 
-function generarHeatmap(rindeBase,precioBase,zona,cultivo){
-
-const data=[];
-
-for(let r=rindeBase*0.7;r<=rindeBase*1.3;r+=5){
-for(let p=precioBase*0.7;p<=precioBase*1.3;p+=10){
-data.push({
-x:p,
-y:r,
-v:(r/10)*p - obtenerCosto(zona,cultivo)
-});
+// ═══ HEATMAP ═══
+function hColor(v){
+  if(v<0)    return '#d64e3a';
+  if(v<150)  return '#e8a825';
+  if(v<350)  return '#9ecf2a';
+  return '#4a9a10';
 }
+function generarHeatmap(cultivo,rBase,pBase){
+  const N=7;
+  const rindes=[],precios=[];
+  for(let i=0;i<N;i++){
+    rindes.push(+(rBase*(0.70+i*0.10)).toFixed(1));
+    precios.push(+(pBase*(0.70+i*0.10)).toFixed(0));
+  }
+  const data=[];
+  for(const r of rindes) for(const p of precios)
+    data.push({x:p,y:r,v:+margen(cultivo,r,p).toFixed(0)});
+
+  if(heatmapChart)heatmapChart.destroy();
+  const ctx=document.getElementById('heatmap').getContext('2d');
+  heatmapChart=new Chart(ctx,{
+    type:'matrix',
+    data:{datasets:[{
+      label:'Margen',data,
+      backgroundColor:c=>hColor(c.raw.v),
+      borderColor:'#0b0f07',borderWidth:2,borderRadius:2,
+      width:c=>{const a=c.chart.chartArea;return a?(a.width/N)-3:30;},
+      height:c=>{const a=c.chart.chartArea;return a?(a.height/N)-3:30;},
+    }]},
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1a2211',borderColor:'#263018',borderWidth:1,
+          titleColor:'#6b8040',bodyColor:'#cfe0a0',
+          bodyFont:{family:'IBM Plex Mono',size:11},
+          callbacks:{
+            title:i=>`Rinde: ${i[0].raw.y} qq/ha · Precio: USD ${i[0].raw.x}/tn`,
+            label:c=>` Margen: USD ${c.raw.v.toLocaleString('es-AR')}/ha`
+          }
+        }
+      },
+      scales:{
+        x:{type:'category',labels:[...new Set(data.map(d=>d.x))].map(v=>'$'+v),
+          ticks:{color:'#4d6030',font:{family:'IBM Plex Mono',size:9}},grid:{display:false}},
+        y:{type:'category',labels:[...new Set(data.map(d=>d.y))].map(v=>v+' qq'),
+          offset:true,ticks:{color:'#4d6030',font:{family:'IBM Plex Mono',size:9}},grid:{display:false}}
+      }
+    }
+  });
 }
 
-if(heatmapChart) heatmapChart.destroy();
-
-heatmapChart=new Chart(document.getElementById("heatmap"),{
-type:'matrix',
-data:{datasets:[{
-data:data,
-backgroundColor:ctx=>{
-let v=ctx.raw.v;
-if(v<0) return "#d32f2f";
-if(v<200) return "#fbc02d";
-return "#388e3c";
-}
-}]}
-});
-
+// ═══ COSTOS ═══
+function renderCostos(c){
+  const d=DET[c];
+  let h='';
+  for(const k in d){
+    const tot=k==='total';
+    h+=`<div class="costo-cell${tot?' total-row':''}">
+      <div class="cname${tot?' total':''}">${NOMBRES[k]}</div>
+      <div class="cval${tot?' total':''}">USD ${d[k].toLocaleString('es-AR')}</div>
+    </div>`;
+  }
+  document.getElementById('costosGrid').innerHTML=h;
 }
 
-function exportarPDF(){
-html2pdf().from(document.body).save("simulacion.pdf");
-}
-
+// INIT
+renderCostos('soja');
+onCultivoChange();
 </script>
-
 </body>
 </html>
