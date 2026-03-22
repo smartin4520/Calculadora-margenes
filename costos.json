@@ -12,7 +12,10 @@
       "flete": "Flete largo (planta/acopio → puerto o destino final)"
     },
     "nota_rinde_indiferencia": "El Rinde de Indiferencia excluye cosecha y flete largo, ya que son gastos de comercialización que se devengan al vender.",
-    "ultima_actualizacion": "2025/26 — Campaña en curso"
+    "ultima_actualizacion": "2025/26 — Campaña en curso",
+    "items_adicionales": {
+      "estructura_usd_ha": "Costo de estructura del campo propio (administración, seguros, impuestos, mantenimiento) en USD/ha. Se muestra como costo adicional separado de los costos directos de producción."
+    }
   },
   "precios_referencia": {
     "_nota": "Precios de referencia que aparecen en el encabezado de la app. Actualizar al inicio de cada campaña o cuando haya cambios significativos de mercado. USD/tn.",
@@ -112,7 +115,8 @@
           "rindeRef": 28,
           "precioRef": 380
         }
-      }
+      },
+      "estructura_usd_ha": 45
     },
     "sur_cordoba": {
       "nombre": "Sur de Córdoba",
@@ -188,7 +192,8 @@
           "rindeRef": 26,
           "precioRef": 380
         }
-      }
+      },
+      "estructura_usd_ha": 42
     },
     "sudeste_bsas": {
       "nombre": "Sudeste Bonaerense",
@@ -264,7 +269,8 @@
           "rindeRef": 23,
           "precioRef": 380
         }
-      }
+      },
+      "estructura_usd_ha": 38
     },
     "oeste_lapampa": {
       "nombre": "Oeste Bonaerense / La Pampa",
@@ -340,7 +346,8 @@
           "rindeRef": 20,
           "precioRef": 380
         }
-      }
+      },
+      "estructura_usd_ha": 35
     }
   }
 }
