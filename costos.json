@@ -14,15 +14,30 @@
     "nota_rinde_indiferencia": "El Rinde de Indiferencia excluye cosecha y flete largo, ya que son gastos de comercialización que se devengan al vender.",
     "ultima_actualizacion": "2025/26 — Campaña en curso"
   },
-
   "precios_referencia": {
     "_nota": "Precios de referencia que aparecen en el encabezado de la app. Actualizar al inicio de cada campaña o cuando haya cambios significativos de mercado. USD/tn.",
-    "soja":    { "precio": 340, "posicion": "Mayo" },
-    "maiz":    { "precio": 185, "posicion": "Abril" },
-    "trigo":   { "precio": 220, "posicion": "Enero" },
-    "colza":   { "precio": 480, "posicion": "Marzo" },
-    "girasol": { "precio": 390, "posicion": "Marzo" }
+    "soja": {
+      "precio": 340,
+      "posicion": "Mayo"
+    },
+    "maiz": {
+      "precio": 185,
+      "posicion": "Abril"
+    },
+    "trigo": {
+      "precio": 220,
+      "posicion": "Enero"
+    },
+    "colza": {
+      "precio": 480,
+      "posicion": "Marzo"
+    },
+    "girasol": {
+      "precio": 390,
+      "posicion": "Marzo"
+    }
   },
+  "zonas": {
     "nucleo": {
       "nombre": "Zona Núcleo",
       "descripcion": "Sur de Santa Fe / Norte de Buenos Aires",
