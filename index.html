@@ -493,7 +493,7 @@ function calcular(){
   const s1=parseFloat(document.getElementById('sup1').value)||null;
   const cos1=getCostos(c1);
 
-  let ing1, mar1, r1, p1, detalleDoble1='';
+  let ing1, mar1, r1, p1, detalleDoble1='', detalleAlqDoble1='';
 
   if(meta1.doble){
     const r1a=parseFloat(document.getElementById('rinde1a').value);
@@ -504,8 +504,14 @@ function calcular(){
     const ing1a=+(r1a/10*p1a).toFixed(1), ing1b=+(r1b/10*p1b).toFixed(1);
     ing1=+(ing1a+ing1b).toFixed(1);
     mar1=+(ing1-cos1).toFixed(1);
-    r1=r1a; p1=p1a; // para gráficos usar 1er cultivo
+    r1=r1a; p1=p1a;
     detalleDoble1=`${CROP_META[meta1.c1].nombre}: ${r1a} qq × USD ${p1a} = ${fmt(ing1a)} | ${CROP_META[meta1.c2].nombre}: ${r1b} qq × USD ${p1b} = ${fmt(ing1b)}`;
+    // Distribución alquiler: Trigo/Soja → 40/60 | Colza/Maíz → 50/50
+    const distC1 = c1==='doble_ts' ? 0.40 : 0.50;
+    const distC2 = 1 - distC1;
+    const alqNomC1 = CROP_META[meta1.c1].nombre;
+    const alqNomC2 = CROP_META[meta1.c2].nombre;
+    detalleAlqDoble1=`${alqNomC1} ${Math.round(distC1*100)}% + ${alqNomC2} ${Math.round(distC2*100)}%`;
   } else {
     r1=parseFloat(document.getElementById('rinde1').value);
     p1=parseFloat(document.getElementById('precio1').value);
@@ -520,6 +526,23 @@ function calcular(){
   const cosSinComerc1=getCostosSinComerc(c1);
   const pbe1=+(cosSinComerc1/(r1/10)).toFixed(1);
   const qqbe1=+(cosSinComerc1/p1*10).toFixed(1);
+
+  // Para doble cultivo con alquiler: margen por componente
+  let margenDobleDetalle = '';
+  if(meta1.doble && alqUSD>0){
+    const distC1 = c1==='doble_ts' ? 0.40 : 0.50;
+    const distC2  = 1 - distC1;
+    const r1a=parseFloat(document.getElementById('rinde1a').value);
+    const p1a=parseFloat(document.getElementById('precio1a').value);
+    const r1b=parseFloat(document.getElementById('rinde1b').value);
+    const p1b=parseFloat(document.getElementById('precio1b').value);
+    const ing1a=+(r1a/10*p1a).toFixed(1), ing1b=+(r1b/10*p1b).toFixed(1);
+    const cos1a=+(getCostos(c1)*distC1 + alqUSD*distC1).toFixed(1);
+    const cos1b=+(getCostos(c1)*distC2 + alqUSD*distC2).toFixed(1);
+    const mar1a=+(ing1a - cos1a).toFixed(1);
+    const mar1b=+(ing1b - cos1b).toFixed(1);
+    margenDobleDetalle=`${CROP_META[meta1.c1].nombre}: ${fmt(mar1a)} (alq. ${Math.round(distC1*100)}%) | ${CROP_META[meta1.c2].nombre}: ${fmt(mar1b)} (alq. ${Math.round(distC2*100)}%)`;
+  }
   let html='';
 
   if(!comparando){
@@ -529,7 +552,7 @@ function calcular(){
       <div class="metric inf"><div class="mlbl">Ingreso bruto</div><div class="mval inf">${fmt(ing1)}</div><div class="mnote">${meta1.doble?detalleDoble1:'por hectárea'}</div></div>
       <div class="metric neu"><div class="mlbl">Costos directos</div><div class="mval neu">${fmt(cos1)}</div><div class="mnote">${DATOS.zonas[zonaActual].nombre}</div></div>
       <div class="metric ${k} highlight"><div class="mlbl">⬟ Margen — Campo propio</div><div class="mval ${k}">${fmt(mar1)}</div><div class="mnote">sin costo de alquiler</div></div>
-      ${mar1Alq!==null?`<div class="metric ${ka} highlight-rent"><div class="mlbl">⬟ Margen — Campo alquilado</div><div class="mval rent">${fmt(mar1Alq)}</div><div class="mnote">alquiler: ${document.getElementById('alqQq').value} qq soja = ${fmt(alqUSD)}/ha</div></div>`:''}
+      ${mar1Alq!==null?`<div class="metric ${ka} highlight-rent"><div class="mlbl">⬟ Margen — Campo alquilado</div><div class="mval rent">${fmt(mar1Alq)}</div><div class="mnote">${meta1.doble ? margenDobleDetalle : `alquiler: ${document.getElementById('alqQq').value} qq soja = ${fmt(alqUSD)}/ha`}</div></div>`:''}
       <div class="metric ${k}"><div class="mlbl">Retorno s/ inversión</div><div class="mval ${k}">${ren1}%</div><div class="mnote">margen ÷ costos directos</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Precio de indiferencia</div><div class="mval be">USD ${pbe1}</div><div class="mnote">sin comerc. · a ${r1} qq/ha</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Rinde de indiferencia</div><div class="mval be">${qqbe1} qq</div><div class="mnote">sin comerc. · a USD ${p1}/tn</div></div>
@@ -585,6 +608,7 @@ function calcular(){
   setTimeout(()=>document.getElementById('resultado').scrollIntoView({behavior:'smooth',block:'start'}),80);
   generarLinea(c1,r1,p1);
   generarHeatmap(c1,r1,p1);
+  renderCostos(c1);
 }
 
 // ── ALQUILER ──
@@ -669,7 +693,9 @@ function generarLinea(cultivo,rinde,pBase){
   const labels=[],data=[];
   const pbe=getCostosSinComerc(cultivo)/(rinde/10);
   const{pMin,pMax,pStep}=getRangos(cultivo);
-  for(let p=pMin;p<=pMax;p+=pStep){labels.push(p);data.push(+margen(cultivo,rinde,p).toFixed(1));}
+  // Arrancar desde un 20% por debajo del precio de indiferencia para mostrar zona de pérdida
+  const startP=Math.floor(Math.min(pMin, pbe*0.80)/pStep)*pStep;
+  for(let p=startP;p<=pMax;p+=pStep){labels.push(p);data.push(+margen(cultivo,rinde,p).toFixed(1));}
   if(lineChart)lineChart.destroy();
   const ctx=document.getElementById('lineChart').getContext('2d');
   const col=CROP_COLOR[cultivo]||'#4a9eff';
@@ -758,14 +784,33 @@ function generarHeatmap(cultivo,rBase,pBase){
   heatmapChart=new Chart(ctx,{type:'scatter',data:{datasets:[{data:[]}]},
     options:{responsive:true,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},
     scales:{
-      x:{type:'linear',min:xL[0]-(xL[1]-xL[0])/2,max:xL[xL.length-1]+(xL[1]-xL[0])/2,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:8},callback:v=>{const i=xL.findIndex(l=>Math.abs(l-v)<(xL[1]-xL[0])*.4);return i>=0?'$'+xL[i]:''}},grid:{color:'#111e30'},title:{display:true,text:'Precio (USD/tn)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}},
+      x:{type:'linear',min:xL[0]-(xL[1]-xL[0])/2,max:xL[xL.length-1]+(xL[1]-xL[0])/2,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:7},maxTicksLimit:20,callback:v=>{const i=xL.findIndex(l=>Math.abs(l-v)<(xL[1]-xL[0])*.4);return i>=0?'$'+xL[i]:''}},grid:{color:'#111e30'},title:{display:true,text:'Precio (USD/tn)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}},
       y:{type:'linear',min:yL[0]-(yL[1]-yL[0])/2,max:yL[yL.length-1]+(yL[1]-yL[0])/2,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:8},callback:v=>{const i=yL.findIndex(l=>Math.abs(l-v)<(yL[1]-yL[0])*.4);return i>=0?yL[i]+' qq':''}},grid:{color:'#111e30'},title:{display:true,text:'Rinde (qq/ha)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}}
     }},plugins:[hp]});
 }
 
 function renderCostos(cultivo){
-  const d=getDetalle(cultivo);let h='';
-  for(const[k,v] of Object.entries(d)){const tot=k==='total';h+=`<div class="costo-cell${tot?' total-row':''}"><div class="cname${tot?' total':''}">${NOM[k]||k}</div><div class="cval${tot?' total':''}">USD ${v.toLocaleString('es-AR')}</div></div>`;}
+  const d=getDetalle(cultivo);
+  let h='';
+  for(const[k,v] of Object.entries(d)){
+    const tot=k==='total';
+    h+=`<div class="costo-cell${tot?' total-row':''}"><div class="cname${tot?' total':''}">${NOM[k]||k}</div><div class="cval${tot?' total':''}">USD ${v.toLocaleString('es-AR')}</div></div>`;
+  }
+  // Si el alquiler está activo, agregar fila y nuevo total
+  const alqUSD=getAlquilerUSD();
+  if(alqUSD>0){
+    const qq=document.getElementById('alqQq').value;
+    const ps=document.getElementById('alqPrecioSoja').value;
+    const totalConAlq=d.total+alqUSD;
+    h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);">
+      <div class="cname" style="color:#c890ff;">Arrendamiento</div>
+      <div class="cval" style="color:#c890ff;">USD ${alqUSD.toLocaleString('es-AR')} <span style="font-size:9px;color:var(--muted);font-weight:400;">(${qq} qq × $${ps})</span></div>
+    </div>
+    <div class="costo-cell total-row">
+      <div class="cname total">TOTAL CON ALQUILER</div>
+      <div class="cval total">USD ${totalConAlq.toLocaleString('es-AR',{maximumFractionDigits:0})}</div>
+    </div>`;
+  }
   document.getElementById('costosGrid').innerHTML=h;
 }
 
