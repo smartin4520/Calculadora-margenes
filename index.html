@@ -14,6 +14,7 @@ body[data-cultivo="trigo"]{--accent:#c8a040;--accent2:#dbb85a;--accent-rgb:200,1
 body[data-cultivo="colza"]{--accent:#e8d800;--accent2:#f5e840;--accent-rgb:232,216,0;}
 body[data-cultivo="girasol"]{--accent:#d4880a;--accent2:#e8a020;--accent-rgb:212,136,10;}
 body[data-cultivo="doble"]{--accent:#8a6cc8;--accent2:#a886e0;--accent-rgb:138,108,200;}
+body[data-cultivo="doble_cm"]{--accent:#6688cc;--accent2:#88aaee;--accent-rgb:102,136,204;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:var(--display);background:var(--bg);color:var(--text);min-height:100vh;}
@@ -100,7 +101,67 @@ button{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:
 .btn-cmp.active{background:rgba(200,160,64,.14);}
 .btn-rst{background:transparent;color:var(--muted);border:1px solid var(--border2);font-size:11px;padding:10px 16px;}
 .btn-rst:hover{border-color:var(--text-dim);color:var(--text-dim);}
-#resultado{display:none;}
+.metric.highlight-rent{border-color:rgba(180,120,255,.35);background:rgba(140,80,220,.06);}
+.metric.highlight-rent::before{background:linear-gradient(90deg,#a060e0,#c890ff);}
+.mval.rent{color:#c890ff;}
+/* Toggle switch alquiler */
+.alquiler-toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 0 0;margin-top:4px;
+  border-top:1px solid var(--border2);
+}
+.alquiler-toggle-label{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);
+  cursor:pointer;user-select:none;
+}
+.alquiler-toggle-label span{transition:color .2s;}
+.alquiler-toggle-label.on span{color:var(--accent);}
+/* El switch en sí */
+.switch{position:relative;width:44px;height:24px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;position:absolute;}
+.switch-track{
+  position:absolute;inset:0;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:12px;cursor:pointer;
+  transition:background .3s,border-color .3s;
+}
+.switch input:checked ~ .switch-track{
+  background:rgba(var(--accent-rgb),.25);
+  border-color:rgba(var(--accent-rgb),.6);
+}
+.switch-thumb{
+  position:absolute;top:3px;left:3px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--muted);
+  transition:transform .25s,background .3s;
+  pointer-events:none;
+}
+.switch input:checked ~ .switch-track .switch-thumb{
+  transform:translateX(20px);
+  background:var(--accent);
+}
+/* Panel alquiler expandible */
+.alquiler-panel{
+  overflow:hidden;max-height:0;
+  transition:max-height .35s ease, opacity .3s;
+  opacity:0;
+}
+.alquiler-panel.open{max-height:160px;opacity:1;}
+.alquiler-inner{
+  margin-top:14px;
+  background:rgba(var(--accent-rgb),.05);
+  border:1px solid rgba(var(--accent-rgb),.2);
+  border-radius:4px;padding:16px;
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  align-items:end;
+}
+.alquiler-equiv{
+  font-family:var(--mono);font-size:9px;color:var(--muted);
+  padding-top:6px;letter-spacing:.5px;
+  grid-column:1/-1;
+}
 .result-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 @media(min-width:540px){.result-row{grid-template-columns:repeat(3,1fr);}}
 @media(min-width:900px){.result-row{grid-template-columns:repeat(auto-fit,minmax(155px,1fr));}}
@@ -200,28 +261,80 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
               <div class="fields-2col">
                 <div class="fgroup span2"><label>Cultivo</label>
                   <select id="cultivo1" onchange="onCultivo1Change()">
-                    <option value="soja">🟢 Soja</option><option value="maiz">🟠 Maíz</option>
-                    <option value="trigo">🟡 Trigo</option><option value="colza">🌕 Colza</option>
-                    <option value="girasol">🟤 Girasol</option><option value="doble">🟣 Doble cultivo — Trigo / Soja 2ª</option>
+                    <option value="soja">🟢 Soja</option>
+                    <option value="maiz">🟠 Maíz</option>
+                    <option value="trigo">🟡 Trigo</option>
+                    <option value="colza">🌕 Colza</option>
+                    <option value="girasol">🟤 Girasol</option>
+                    <option value="doble_ts">🟣 Doble cultivo — Trigo / Soja 2ª</option>
+                    <option value="doble_cm">🟤 Doble cultivo — Colza / Maíz</option>
                   </select>
                 </div>
                 <div class="fgroup"><label>Rendimiento (qq/ha)</label><input type="number" id="rinde1" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>
                 <div class="fgroup"><label>Precio (USD/tn)</label><input type="number" id="precio1" placeholder="—" min="0" step="5" inputmode="decimal"></div>
+                <!-- Panel doble cultivo — visible solo cuando corresponde -->
+                <div id="doblePanel1" style="display:none;grid-column:1/-1;">
+                  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="grid-column:1/-1;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid var(--border);" id="doble1Label">CULTIVO 1 (INVIERNO)</div>
+                    <div class="fgroup"><label id="doble1aLabel">Rinde 1º cultivo (qq/ha)</label><input type="number" id="rinde1a" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>
+                    <div class="fgroup"><label id="doble1bLabel">Precio 1º cultivo (USD/tn)</label><input type="number" id="precio1a" placeholder="—" min="0" step="5" inputmode="decimal"></div>
+                    <div style="grid-column:1/-1;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid var(--border);padding-top:4px;" id="doble1Label2">CULTIVO 2 (VERANO)</div>
+                    <div class="fgroup"><label id="doble1cLabel">Rinde 2º cultivo (qq/ha)</label><input type="number" id="rinde1b" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>
+                    <div class="fgroup"><label id="doble1dLabel">Precio 2º cultivo (USD/tn)</label><input type="number" id="precio1b" placeholder="—" min="0" step="5" inputmode="decimal"></div>
+                  </div>
+                </div>
                 <div class="fgroup span2"><label>Superficie (ha) — opcional</label><input type="number" id="sup1" placeholder="ej: 100" min="0" inputmode="decimal"></div>
               </div>
-            </div>
+
+              <!-- Toggle alquiler -->
+              <div class="alquiler-toggle-row">
+                <label class="alquiler-toggle-label" id="alqToggleLabel" for="alqSwitch">
+                  <span>Incluir costo de alquiler</span>
+                </label>
+                <label class="switch">
+                  <input type="checkbox" id="alqSwitch" onchange="toggleAlquiler()">
+                  <div class="switch-track"><div class="switch-thumb"></div></div>
+                </label>
+              </div>
+              <div class="alquiler-panel" id="alqPanel">
+                <div class="alquiler-inner">
+                  <div class="fgroup">
+                    <label>Alquiler (qq soja/ha)</label>
+                    <input type="number" id="alqQq" placeholder="ej: 12" min="0" step="0.5" inputmode="decimal" oninput="actualizarEquivAlq()">
+                  </div>
+                  <div class="fgroup">
+                    <label>Precio soja ref. (USD/tn)</label>
+                    <input type="number" id="alqPrecioSoja" placeholder="ej: 340" min="0" step="5" inputmode="decimal" oninput="actualizarEquivAlq()">
+                  </div>
+                  <div class="alquiler-equiv" id="alqEquiv">Equivalente en USD: — por hectárea</div>
+                </div>
+              </div>
             <div class="cultivo-block" id="block2" style="display:none">
               <div class="block-header"><div class="block-num am">B</div><div class="block-ttl">Cultivo comparado</div></div>
               <div class="fields-2col">
                 <div class="fgroup span2"><label>Cultivo</label>
                   <select id="cultivo2">
-                    <option value="maiz">🟠 Maíz</option><option value="soja">🟢 Soja</option>
-                    <option value="trigo">🟡 Trigo</option><option value="colza">🌕 Colza</option>
-                    <option value="girasol">🟤 Girasol</option><option value="doble">🟣 Doble cultivo — Trigo / Soja 2ª</option>
+                    <option value="maiz">🟠 Maíz</option>
+                    <option value="soja">🟢 Soja</option>
+                    <option value="trigo">🟡 Trigo</option>
+                    <option value="colza">🌕 Colza</option>
+                    <option value="girasol">🟤 Girasol</option>
+                    <option value="doble_ts">🟣 Doble cultivo — Trigo / Soja 2ª</option>
+                    <option value="doble_cm">🟤 Doble cultivo — Colza / Maíz</option>
                   </select>
                 </div>
                 <div class="fgroup"><label>Rendimiento (qq/ha)</label><input type="number" id="rinde2" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>
                 <div class="fgroup"><label>Precio (USD/tn)</label><input type="number" id="precio2" placeholder="—" min="0" step="5" inputmode="decimal"></div>
+                <div id="doblePanel2" style="display:none;grid-column:1/-1;">
+                  <div style="background:var(--surface);border:1px solid var(--border2);border-radius:4px;padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="grid-column:1/-1;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid var(--border);" id="doble2Label">CULTIVO 1 (INVIERNO)</div>
+                    <div class="fgroup"><label id="doble2aLabel">Rinde 1º cultivo (qq/ha)</label><input type="number" id="rinde2a" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>
+                    <div class="fgroup"><label id="doble2bLabel">Precio 1º cultivo (USD/tn)</label><input type="number" id="precio2a" placeholder="—" min="0" step="5" inputmode="decimal"></div>
+                    <div style="grid-column:1/-1;font-family:var(--mono);font-size:8px;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;padding-bottom:8px;border-bottom:1px solid var(--border);padding-top:4px;" id="doble2Label2">CULTIVO 2 (VERANO)</div>
+                    <div class="fgroup"><label id="doble2cLabel">Rinde 2º cultivo (qq/ha)</label><input type="number" id="rinde2b" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>
+                    <div class="fgroup"><label id="doble2dLabel">Precio 2º cultivo (USD/tn)</label><input type="number" id="precio2b" placeholder="—" min="0" step="5" inputmode="decimal"></div>
+                  </div>
+                </div>
                 <div class="fgroup span2"><label>Superficie (ha) — opcional</label><input type="number" id="sup2" placeholder="ej: 100" min="0" inputmode="decimal"></div>
               </div>
             </div>
@@ -270,8 +383,16 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
 <footer>© mimargenagro · CALCULADORA DE MÁRGENES AGRÍCOLAS · VALORES ORIENTATIVOS — AJUSTAR A CADA ESTABLECIMIENTO</footer>
 <script>
 let DATOS=null,zonaActual=null,comparando=false,lineChart=null,heatmapChart=null;
-const CROP_META={soja:{nombre:'Soja',emoji:'🟢'},maiz:{nombre:'Maíz',emoji:'🟠'},trigo:{nombre:'Trigo',emoji:'🟡'},colza:{nombre:'Colza',emoji:'🌕'},girasol:{nombre:'Girasol',emoji:'🟤'},doble:{nombre:'Trigo/Soja 2ª',emoji:'🟣'}};
-const CROP_COLOR={soja:'#5cb85c',maiz:'#f07820',trigo:'#c8a040',colza:'#d4c800',girasol:'#d4880a',doble:'#8a6cc8'};
+const CROP_META={
+  soja:    {nombre:'Soja',           emoji:'🟢', doble:false},
+  maiz:    {nombre:'Maíz',           emoji:'🟠', doble:false},
+  trigo:   {nombre:'Trigo',          emoji:'🟡', doble:false},
+  colza:   {nombre:'Colza',          emoji:'🌕', doble:false},
+  girasol: {nombre:'Girasol',        emoji:'🟤', doble:false},
+  doble_ts:{nombre:'Trigo / Soja 2ª',emoji:'🟣', doble:true, c1:'trigo', c2:'soja',  lbl1:'TRIGO (INVIERNO)', lbl2:'SOJA 2ª (VERANO)',  jsonKey:'doble'},
+  doble_cm:{nombre:'Colza / Maíz',   emoji:'🟤', doble:true, c1:'colza', c2:'maiz',  lbl1:'COLZA (INVIERNO)', lbl2:'MAÍZ (VERANO)',      jsonKey:'doble_cm'},
+};
+const CROP_COLOR={soja:'#5cb85c',maiz:'#f07820',trigo:'#c8a040',colza:'#d4c800',girasol:'#d4880a',doble_ts:'#8a6cc8',doble_cm:'#6688cc'};
 const NOM={semilla:'Semillas',fertilizacion:'Fertilización',agroquimicos:'Agroquímicos',labranza:'Labranza & Siembra',cosecha:'Cosecha & Flete',flete:'Flete adicional',total:'TOTAL'};
 
 async function cargarDatos(){
@@ -310,72 +431,147 @@ function seleccionarZona(key){
   resetearSilencioso();
 }
 
-function getCostos(c){const d=DATOS.zonas[zonaActual].cultivos[c];return Object.entries(d).filter(([k])=>!['rindeRef','precioRef'].includes(k)).reduce((s,[,v])=>s+v,0);}
-function getDetalle(c){const d=DATOS.zonas[zonaActual].cultivos[c];const det={};let tot=0;for(const[k,v] of Object.entries(d)){if(!['rindeRef','precioRef'].includes(k)){det[k]=v;tot+=v;}}det.total=tot;return det;}
-function getRRef(c){return DATOS.zonas[zonaActual].cultivos[c].rindeRef;}
-function getPRef(c){return DATOS.zonas[zonaActual].cultivos[c].precioRef;}
+function getJsonKey(c){ return CROP_META[c]?.jsonKey || c; }
+function getCostos(c){const d=DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];return Object.entries(d).filter(([k])=>!['rindeRef','precioRef'].includes(k)).reduce((s,[,v])=>s+v,0);}
+function getDetalle(c){const d=DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];const det={};let tot=0;for(const[k,v] of Object.entries(d)){if(!['rindeRef','precioRef'].includes(k)){det[k]=v;tot+=v;}}det.total=tot;return det;}
+function getRRef(c){const m=CROP_META[c];if(m?.doble){return DATOS.zonas[zonaActual].cultivos[m.jsonKey]?.rindeRef||0;}return DATOS.zonas[zonaActual].cultivos[c]?.rindeRef||0;}
+function getPRef(c){const m=CROP_META[c];if(m?.doble){return DATOS.zonas[zonaActual].cultivos[m.jsonKey]?.precioRef||0;}return DATOS.zonas[zonaActual].cultivos[c]?.precioRef||0;}
 function margen(c,r,p){return(r/10)*p-getCostos(c);}
+// Margen doble: ingreso de ambos cultivos menos costo compartido
+function margenDoble(c,r1a,p1a,r1b,p1b){
+  const ing=(r1a/10)*p1a+(r1b/10)*p1b;
+  return +(ing-getCostos(c)).toFixed(1);
+}
 const fmt=v=>(v<0?'–':'')+'USD '+Math.abs(v).toLocaleString('es-AR',{maximumFractionDigits:0});
 const cc=v=>v>0?'pos':v<0?'neg':'neu';
 
-function onCultivo1Change(){
-  if(!zonaActual)return;
-  const c=document.getElementById('cultivo1').value;
-  document.body.setAttribute('data-cultivo',c);
-  document.getElementById('badgeLabel').textContent=CROP_META[c].nombre.toUpperCase();
-  document.getElementById('rinde1').placeholder='ref: '+getRRef(c)+' qq';
-  document.getElementById('precio1').placeholder='ref: USD '+getPRef(c);
-  renderCostos(c);
+function setDoblePanelLabels(panelId, meta){
+  const p=document.getElementById(panelId);
+  if(!p) return;
+  const c1n=CROP_META[meta.c1]?.nombre||''; const c2n=CROP_META[meta.c2]?.nombre||'';
+  p.querySelector('[id$="Label"]').textContent=meta.lbl1;
+  p.querySelector('[id$="Label2"]').textContent=meta.lbl2;
+  // placeholders
+  const z=DATOS.zonas[zonaActual]?.cultivos;
+  if(z){
+    const suffix=panelId==='doblePanel1'?'1':'2';
+    const ra=document.getElementById('rinde'+suffix+'a'), rb=document.getElementById('rinde'+suffix+'b');
+    const pa=document.getElementById('precio'+suffix+'a'), pb=document.getElementById('precio'+suffix+'b');
+    if(ra&&z[meta.c1]) ra.placeholder='ref: '+z[meta.c1].rindeRef+' qq';
+    if(pa&&z[meta.c1]) pa.placeholder='ref: USD '+z[meta.c1].precioRef;
+    if(rb&&z[meta.c2]) rb.placeholder='ref: '+z[meta.c2].rindeRef+' qq';
+    if(pb&&z[meta.c2]) pb.placeholder='ref: USD '+z[meta.c2].precioRef;
+  }
 }
 
-function toggleComparar(){
-  comparando=!comparando;
-  document.getElementById('block2').style.display=comparando?'flex':'none';
-  document.getElementById('btnCmp').classList.toggle('active',comparando);
+function onCultivo1Change(){
+  if(!zonaActual) return;
+  const c=document.getElementById('cultivo1').value;
+  const meta=CROP_META[c];
+  document.body.setAttribute('data-cultivo', meta.doble ? (c==='doble_ts'?'doble':'colza') : c);
+  document.getElementById('badgeLabel').textContent=meta.nombre.toUpperCase();
+  const esDoble=meta.doble;
+  // Mostrar u ocultar campos simples vs panel doble
+  document.getElementById('rinde1').closest('.fgroup').style.display=esDoble?'none':'flex';
+  document.getElementById('precio1').closest('.fgroup').style.display=esDoble?'none':'flex';
+  document.getElementById('doblePanel1').style.display=esDoble?'block':'none';
+  if(!esDoble){
+    document.getElementById('rinde1').placeholder='ref: '+getRRef(c)+' qq';
+    document.getElementById('precio1').placeholder='ref: USD '+getPRef(c);
+  } else {
+    setDoblePanelLabels('doblePanel1', meta);
+  }
+  renderCostos(c);
 }
 
 function calcular(){
   if(!zonaActual){alert('Seleccioná una zona primero.');return;}
   const c1=document.getElementById('cultivo1').value;
-  const r1=parseFloat(document.getElementById('rinde1').value);
-  const p1=parseFloat(document.getElementById('precio1').value);
+  const meta1=CROP_META[c1];
   const s1=parseFloat(document.getElementById('sup1').value)||null;
-  if(!r1||!p1){alert('Completá rendimiento y precio.');return;}
-  const cos1=getCostos(c1),ing1=+(r1/10*p1).toFixed(1),mar1=+(ing1-cos1).toFixed(1);
-  const ren1=((mar1/cos1)*100).toFixed(1),pbe1=+(cos1/(r1/10)).toFixed(1),qqbe1=+(cos1/p1*10).toFixed(1);
+  const cos1=getCostos(c1);
+
+  let ing1, mar1, r1, p1, detalleDoble1='';
+
+  if(meta1.doble){
+    const r1a=parseFloat(document.getElementById('rinde1a').value);
+    const p1a=parseFloat(document.getElementById('precio1a').value);
+    const r1b=parseFloat(document.getElementById('rinde1b').value);
+    const p1b=parseFloat(document.getElementById('precio1b').value);
+    if(!r1a||!p1a||!r1b||!p1b){alert('Completá rendimiento y precio de ambos cultivos del doble.');return;}
+    const ing1a=+(r1a/10*p1a).toFixed(1), ing1b=+(r1b/10*p1b).toFixed(1);
+    ing1=+(ing1a+ing1b).toFixed(1);
+    mar1=+(ing1-cos1).toFixed(1);
+    r1=r1a; p1=p1a; // para gráficos usar 1er cultivo
+    detalleDoble1=`${CROP_META[meta1.c1].nombre}: ${r1a} qq × USD ${p1a} = ${fmt(ing1a)} | ${CROP_META[meta1.c2].nombre}: ${r1b} qq × USD ${p1b} = ${fmt(ing1b)}`;
+  } else {
+    r1=parseFloat(document.getElementById('rinde1').value);
+    p1=parseFloat(document.getElementById('precio1').value);
+    if(!r1||!p1){alert('Completá rendimiento y precio.');return;}
+    ing1=+(r1/10*p1).toFixed(1);
+    mar1=+(ing1-cos1).toFixed(1);
+  }
+
+  const alqUSD=getAlquilerUSD();
+  const ren1=((mar1/cos1)*100).toFixed(1);
+  const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null;
+  const pbe1=+(cos1/(r1/10)).toFixed(1);
+  const qqbe1=+(cos1/p1*10).toFixed(1);
   let html='';
+
   if(!comparando){
-    const k=cc(mar1);
+    const k=cc(mar1), ka=mar1Alq!==null?cc(mar1Alq):null;
     document.getElementById('resTline').className='tline'+(mar1<0?' tline-red':'');
     html=`<div class="result-row">
-      <div class="metric inf"><div class="mlbl">Ingreso bruto</div><div class="mval inf">${fmt(ing1)}</div><div class="mnote">por hectárea</div></div>
+      <div class="metric inf"><div class="mlbl">Ingreso bruto</div><div class="mval inf">${fmt(ing1)}</div><div class="mnote">${meta1.doble?detalleDoble1:'por hectárea'}</div></div>
       <div class="metric neu"><div class="mlbl">Costos directos</div><div class="mval neu">${fmt(cos1)}</div><div class="mnote">${DATOS.zonas[zonaActual].nombre}</div></div>
-      <div class="metric ${k} highlight"><div class="mlbl">⬟ Margen bruto</div><div class="mval ${k}">${fmt(mar1)}</div><div class="mnote">por hectárea</div></div>
+      <div class="metric ${k} highlight"><div class="mlbl">⬟ Margen — Campo propio</div><div class="mval ${k}">${fmt(mar1)}</div><div class="mnote">sin costo de alquiler</div></div>
+      ${mar1Alq!==null?`<div class="metric ${ka} highlight-rent"><div class="mlbl">⬟ Margen — Campo alquilado</div><div class="mval rent">${fmt(mar1Alq)}</div><div class="mnote">alquiler: ${document.getElementById('alqQq').value} qq soja = ${fmt(alqUSD)}/ha</div></div>`:''}
       <div class="metric ${k}"><div class="mlbl">Rentabilidad</div><div class="mval ${k}">${ren1}%</div><div class="mnote">sobre costos directos</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Precio de breakeven</div><div class="mval be">USD ${pbe1}</div><div class="mnote">precio mín. para cubrir costos</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ qq/ha necesarios</div><div class="mval be">${qqbe1} qq</div><div class="mnote">rinde mín. a USD ${p1}/tn</div></div>
-      ${s1?`<div class="metric ${k}"><div class="mlbl">Margen total — ${s1} ha</div><div class="mval ${k}">${fmt(mar1*s1)}</div><div class="mnote">estimado campo total</div></div>`:''}
+      ${s1?`<div class="metric ${k}"><div class="mlbl">Margen total — ${s1} ha</div><div class="mval ${k}">${fmt(mar1*s1)}</div><div class="mnote">campo propio · estimado</div></div>`:''}
+      ${s1&&mar1Alq!==null?`<div class="metric ${ka}"><div class="mlbl">Margen total alquilado — ${s1} ha</div><div class="mval rent">${fmt(mar1Alq*s1)}</div><div class="mnote">con alquiler · estimado</div></div>`:''}
     </div>`;
-  }else{
+  } else {
     const c2=document.getElementById('cultivo2').value;
-    const r2=parseFloat(document.getElementById('rinde2').value);
-    const p2=parseFloat(document.getElementById('precio2').value);
-    if(!r2||!p2){alert('Completá los datos del cultivo B.');return;}
-    const cos2=getCostos(c2),ing2=+(r2/10*p2).toFixed(1),mar2=+(ing2-cos2).toFixed(1);
-    const ren2=((mar2/cos2)*100).toFixed(1),pbe2=+(cos2/(r2/10)).toFixed(1),qqbe2=+(cos2/p2*10).toFixed(1);
-    const diff=+(mar1-mar2).toFixed(1),k1=cc(mar1),k2=cc(mar2),kd=cc(diff);
-    const winner=diff>0?CROP_META[c1].nombre:diff<0?CROP_META[c2].nombre:'Igual resultado';
+    const meta2=CROP_META[c2];
+    const cos2=getCostos(c2);
+    let ing2, mar2, r2, p2, detalleDoble2='';
+
+    if(meta2.doble){
+      const r2a=parseFloat(document.getElementById('rinde2a').value);
+      const p2a=parseFloat(document.getElementById('precio2a').value);
+      const r2b=parseFloat(document.getElementById('rinde2b').value);
+      const p2b=parseFloat(document.getElementById('precio2b').value);
+      if(!r2a||!p2a||!r2b||!p2b){alert('Completá rendimiento y precio de ambos cultivos del doble B.');return;}
+      const ing2a=+(r2a/10*p2a).toFixed(1), ing2b=+(r2b/10*p2b).toFixed(1);
+      ing2=+(ing2a+ing2b).toFixed(1); mar2=+(ing2-cos2).toFixed(1);
+      r2=r2a; p2=p2a;
+      detalleDoble2=`${CROP_META[meta2.c1].nombre}: ${r2a} qq × USD ${p2a} | ${CROP_META[meta2.c2].nombre}: ${r2b} qq × USD ${p2b}`;
+    } else {
+      r2=parseFloat(document.getElementById('rinde2').value);
+      p2=parseFloat(document.getElementById('precio2').value);
+      if(!r2||!p2){alert('Completá los datos del cultivo B.');return;}
+      ing2=+(r2/10*p2).toFixed(1); mar2=+(ing2-cos2).toFixed(1);
+    }
+
+    const ren2=((mar2/cos2)*100).toFixed(1);
+    const pbe2=+(cos2/(r2/10)).toFixed(1), qqbe2=+(cos2/p2*10).toFixed(1);
+    const diff=+(mar1-mar2).toFixed(1), k1=cc(mar1), k2=cc(mar2), kd=cc(diff);
+    const winner=diff>0?meta1.nombre:diff<0?meta2.nombre:'Igual resultado';
     document.getElementById('resTline').className='tline';
     html=`<div class="result-row">
-      <div class="metric ${k1} highlight"><div class="mlbl">${CROP_META[c1].emoji} ${CROP_META[c1].nombre} — Margen</div><div class="mval ${k1}">${fmt(mar1)}</div><div class="mnote">Ingreso ${fmt(ing1)} · Costo ${fmt(cos1)}</div></div>
-      <div class="metric ${k2} highlight"><div class="mlbl">${CROP_META[c2].emoji} ${CROP_META[c2].nombre} — Margen</div><div class="mval ${k2}">${fmt(mar2)}</div><div class="mnote">Ingreso ${fmt(ing2)} · Costo ${fmt(cos2)}</div></div>
+      <div class="metric ${k1} highlight"><div class="mlbl">${meta1.emoji} ${meta1.nombre} — Margen</div><div class="mval ${k1}">${fmt(mar1)}</div><div class="mnote">${meta1.doble?detalleDoble1:'Ingreso '+fmt(ing1)+' · Costo '+fmt(cos1)}</div></div>
+      <div class="metric ${k2} highlight"><div class="mlbl">${meta2.emoji} ${meta2.nombre} — Margen</div><div class="mval ${k2}">${fmt(mar2)}</div><div class="mnote">${meta2.doble?detalleDoble2:'Ingreso '+fmt(ing2)+' · Costo '+fmt(cos2)}</div></div>
       <div class="metric ${kd}"><div class="mlbl">Diferencia A − B</div><div class="mval ${kd}">${diff>=0?'+':''}${fmt(diff)}</div><div class="mnote">${winner}${diff!==0?' es más rentable':''}</div></div>
-      <div class="metric highlight-be"><div class="mlbl">◆ Breakeven ${CROP_META[c1].nombre}</div><div class="mval be">USD ${pbe1} · ${qqbe1} qq</div><div class="mnote">precio / rinde mínimo</div></div>
-      <div class="metric highlight-be"><div class="mlbl">◆ Breakeven ${CROP_META[c2].nombre}</div><div class="mval be">USD ${pbe2} · ${qqbe2} qq</div><div class="mnote">precio / rinde mínimo</div></div>
-      <div class="metric ${k1}"><div class="mlbl">Rentab. ${CROP_META[c1].nombre}</div><div class="mval ${k1}">${ren1}%</div><div class="mnote">sobre costos directos</div></div>
-      <div class="metric ${k2}"><div class="mlbl">Rentab. ${CROP_META[c2].nombre}</div><div class="mval ${k2}">${ren2}%</div><div class="mnote">sobre costos directos</div></div>
+      <div class="metric highlight-be"><div class="mlbl">◆ Breakeven ${meta1.nombre}</div><div class="mval be">USD ${pbe1} · ${qqbe1} qq</div><div class="mnote">1º cultivo</div></div>
+      <div class="metric highlight-be"><div class="mlbl">◆ Breakeven ${meta2.nombre}</div><div class="mval be">USD ${pbe2} · ${qqbe2} qq</div><div class="mnote">1º cultivo</div></div>
+      <div class="metric ${k1}"><div class="mlbl">Rentab. ${meta1.nombre}</div><div class="mval ${k1}">${ren1}%</div><div class="mnote">sobre costos directos</div></div>
+      <div class="metric ${k2}"><div class="mlbl">Rentab. ${meta2.nombre}</div><div class="mval ${k2}">${ren2}%</div><div class="mnote">sobre costos directos</div></div>
     </div>`;
   }
+
   document.getElementById('metricas').innerHTML=html;
   document.getElementById('resultado').style.display='block';
   document.getElementById('graficos').style.display='block';
@@ -384,6 +580,54 @@ function calcular(){
   generarHeatmap(c1,r1,p1);
 }
 
+// ── ALQUILER ──
+function toggleAlquiler(){
+  const on=document.getElementById('alqSwitch').checked;
+  document.getElementById('alqPanel').classList.toggle('open',on);
+  document.getElementById('alqToggleLabel').classList.toggle('on',on);
+  if(on){
+    const inp=document.getElementById('alqPrecioSoja');
+    if(!inp.value&&zonaActual){inp.value=DATOS.zonas[zonaActual].cultivos['soja']?.precioRef||340;}
+    actualizarEquivAlq();
+  }
+}
+function actualizarEquivAlq(){
+  const qq=parseFloat(document.getElementById('alqQq').value)||0;
+  const ps=parseFloat(document.getElementById('alqPrecioSoja').value)||0;
+  const usd=+(qq/10*ps).toFixed(1);
+  document.getElementById('alqEquiv').textContent=
+    (qq&&ps)?`≈ USD ${usd.toLocaleString('es-AR')}/ha  (${qq} qq × USD ${ps}/tn ÷ 10)`:'Equivalente en USD: — por hectárea';
+}
+function getAlquilerUSD(){
+  if(!document.getElementById('alqSwitch').checked) return 0;
+  const qq=parseFloat(document.getElementById('alqQq').value)||0;
+  const ps=parseFloat(document.getElementById('alqPrecioSoja').value)||0;
+  return +(qq/10*ps).toFixed(1);
+}
+
+function toggleComparar(){
+  comparando=!comparando;
+  document.getElementById('block2').style.display=comparando?'flex':'none';
+  document.getElementById('btnCmp').classList.toggle('active',comparando);
+  if(comparando){
+    const c2=document.getElementById('cultivo2').value;
+    const m2=CROP_META[c2];
+    document.getElementById('rinde2').closest('.fgroup').style.display=m2.doble?'none':'flex';
+    document.getElementById('precio2').closest('.fgroup').style.display=m2.doble?'none':'flex';
+    document.getElementById('doblePanel2').style.display=m2.doble?'block':'none';
+    if(m2.doble&&zonaActual) setDoblePanelLabels('doblePanel2',m2);
+  }
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('cultivo2').addEventListener('change',function(){
+    const m2=CROP_META[this.value];
+    document.getElementById('rinde2').closest('.fgroup').style.display=m2.doble?'none':'flex';
+    document.getElementById('precio2').closest('.fgroup').style.display=m2.doble?'none':'flex';
+    document.getElementById('doblePanel2').style.display=m2.doble?'block':'none';
+    if(m2.doble&&zonaActual) setDoblePanelLabels('doblePanel2',m2);
+  });
+});
+
 function resetearSilencioso(){
   document.getElementById('resultado').style.display='none';
   document.getElementById('graficos').style.display='none';
@@ -391,18 +635,26 @@ function resetearSilencioso(){
   if(heatmapChart){heatmapChart.destroy();heatmapChart=null;}
 }
 function resetear(){
-  ['rinde1','precio1','sup1','rinde2','precio2','sup2'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['rinde1','precio1','sup1','rinde2','precio2','sup2',
+   'rinde1a','precio1a','rinde1b','precio1b',
+   'rinde2a','precio2a','rinde2b','precio2b',
+   'alqQq','alqPrecioSoja'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  // Reset alquiler toggle
+  const sw=document.getElementById('alqSwitch');
+  if(sw){sw.checked=false;document.getElementById('alqPanel').classList.remove('open');document.getElementById('alqToggleLabel').classList.remove('on');}
+  document.getElementById('alqEquiv').textContent='Equivalente en USD: — por hectárea';
   resetearSilencioso();
 }
 
 // Rangos fijos por cultivo para heatmap y línea
 const RANGOS={
-  soja:   {pMin:250, pMax:400, pStep:10, rMin:15, rMax:55, rStep:5},
-  maiz:   {pMin:140, pMax:240, pStep:10, rMin:50, rMax:120,rStep:10},
-  trigo:  {pMin:160, pMax:280, pStep:10, rMin:20, rMax:65, rStep:5},
-  colza:  {pMin:340, pMax:560, pStep:20, rMin:12, rMax:42, rStep:5},
-  girasol:{pMin:280, pMax:480, pStep:20, rMin:10, rMax:40, rStep:5},
-  doble:  {pMin:200, pMax:340, pStep:10, rMin:50, rMax:115,rStep:10},
+  soja:    {pMin:250, pMax:400, pStep:10, rMin:15, rMax:55,  rStep:5},
+  maiz:    {pMin:140, pMax:240, pStep:10, rMin:50, rMax:120, rStep:10},
+  trigo:   {pMin:160, pMax:280, pStep:10, rMin:20, rMax:65,  rStep:5},
+  colza:   {pMin:340, pMax:560, pStep:20, rMin:12, rMax:42,  rStep:5},
+  girasol: {pMin:280, pMax:480, pStep:20, rMin:10, rMax:40,  rStep:5},
+  doble_ts:{pMin:200, pMax:340, pStep:10, rMin:50, rMax:115, rStep:10},
+  doble_cm:{pMin:220, pMax:380, pStep:10, rMin:50, rMax:115, rStep:10},
 };
 function getRangos(c){return RANGOS[c]||{pMin:200,pMax:500,pStep:20,rMin:15,rMax:80,rStep:5};}
 
