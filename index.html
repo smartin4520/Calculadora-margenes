@@ -473,28 +473,28 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
 </main>
 <footer>© mimargenagro · CALCULADORA DE MÁRGENES AGRÍCOLAS · VALORES ORIENTATIVOS — AJUSTAR A CADA ESTABLECIMIENTO</footer>
 
-<!-- MODAL DATOS ASESOR -->
+<!-- MODAL REGISTRO USUARIO -->
 <div class="modal-overlay" id="modalAsesor">
   <div class="modal-box">
-    <div class="modal-title">Datos del informe</div>
-    <div class="modal-sub">ESTOS DATOS APARECEN EN EL ENCABEZADO DEL PDF</div>
+    <div class="modal-title">Antes de descargar</div>
+    <div class="modal-sub">TUS DATOS NOS AYUDAN A MEJORAR LA HERRAMIENTA</div>
     <div class="modal-fields">
       <div class="modal-field">
-        <label>Nombre del asesor</label>
-        <input type="text" id="asesorNombre" placeholder="Ing. Juan García" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
+        <label>Empresa / Establecimiento</label>
+        <input type="text" id="regEmpresa" placeholder="Ej: Agropecuaria San Martín" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
       </div>
       <div class="modal-field">
-        <label>Empresa / Estudio</label>
-        <input type="text" id="asesorEmpresa" placeholder="Agro Consulting S.R.L." style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
+        <label>Email de contacto</label>
+        <input type="email" id="regEmail" placeholder="ejemplo@campo.com.ar" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
       </div>
-      <div class="modal-field">
-        <label>Teléfono / Email — opcional</label>
-        <input type="text" id="asesorContacto" placeholder="+54 9 11 1234-5678" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
-      </div>
+      <p style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.5px;line-height:1.6;">
+        Tus datos son confidenciales y no serán compartidos con terceros.<br>
+        Solo completá esto una vez — quedarán guardados en tu dispositivo.
+      </p>
     </div>
     <div class="modal-actions">
-      <button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn-modal-ok" onclick="generarPDF()">Generar PDF</button>
+      <button class="btn-modal-cancel" onclick="omitirRegistro()">Omitir</button>
+      <button class="btn-modal-ok" id="btnRegistrar" onclick="registrarYgenerar()">Descargar PDF</button>
     </div>
   </div>
 </div>
@@ -994,32 +994,89 @@ function renderCostos(cultivo){
   document.getElementById('costosGrid').innerHTML=h;
 }
 
-// ══ PDF ══
+// ══ REGISTRO + PDF ══
+// URL del Google Apps Script — reemplazar con tu URL al deployar
+const APPS_SCRIPT_URL = 'PEGAR_URL_APPS_SCRIPT_AQUI';
+
 function exportarPDF(){
-  // Abrir modal para datos del asesor
-  document.getElementById('modalAsesor').classList.add('open');
+  // Si ya registró sus datos, generar PDF directo
+  const registrado = localStorage.getItem('mma_registrado');
+  if(registrado){
+    generarPDF();
+  } else {
+    // Mostrar modal de registro
+    // Pre-completar si tiene datos guardados parcialmente
+    const emp = localStorage.getItem('mma_empresa')||'';
+    const mail= localStorage.getItem('mma_email')||'';
+    if(emp)  document.getElementById('regEmpresa').value=emp;
+    if(mail) document.getElementById('regEmail').value=mail;
+    document.getElementById('modalAsesor').classList.add('open');
+  }
 }
+
 function cerrarModal(){
   document.getElementById('modalAsesor').classList.remove('open');
 }
 
-async function generarPDF(){
+function omitirRegistro(){
+  // Puede omitir pero igualmente genera el PDF
   cerrarModal();
-  const btnPdf=document.querySelector('.btn-pdf');
-  btnPdf.disabled=true; btnPdf.textContent='⏳ Generando...';
+  generarPDF();
+}
+
+async function registrarYgenerar(){
+  const empresa = document.getElementById('regEmpresa').value.trim();
+  const email   = document.getElementById('regEmail').value.trim();
+
+  // Validación mínima de email si lo completó
+  if(email && !email.includes('@')){
+    document.getElementById('regEmail').style.borderColor='var(--red)';
+    return;
+  }
+  document.getElementById('regEmail').style.borderColor='';
+
+  // Guardar en localStorage para no volver a pedir
+  if(empresa || email){
+    localStorage.setItem('mma_empresa', empresa);
+    localStorage.setItem('mma_email',   email);
+    localStorage.setItem('mma_registrado', '1');
+  }
+
+  // Enviar a Google Sheets (sin bloquear si falla)
+  if(APPS_SCRIPT_URL !== 'PEGAR_URL_APPS_SCRIPT_AQUI' && (empresa || email)){
+    const c1    = document.getElementById('cultivo1').value;
+    const r1    = document.getElementById('rinde1').value;
+    const p1    = document.getElementById('precio1').value;
+    try {
+      fetch(APPS_SCRIPT_URL, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          empresa, email,
+          zona:    DATOS.zonas[zonaActual]?.nombre||zonaActual,
+          cultivo: CROP_META[c1]?.nombre||c1,
+          rinde:   r1, precio: p1,
+        })
+      });
+    } catch(e){ console.log('Registro no enviado:', e); }
+  }
+
+  cerrarModal();
+  generarPDF();
+}
+
+async function generarPDF(){
+  const btnPdf = document.querySelector('.btn-pdf');
+  btnPdf.disabled=true;
+  btnPdf.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Generando...';
 
   try {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     const W=210, margin=14;
-
-    // ── Datos asesor y meta ──
-    const nombre   = document.getElementById('asesorNombre').value  || 'mimargenagro';
-    const empresa  = document.getElementById('asesorEmpresa').value || '';
-    const contacto = document.getElementById('asesorContacto').value|| '';
-    const fecha    = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
-    const c1       = document.getElementById('cultivo1').value;
-    const zona     = DATOS.zonas[zonaActual].nombre;
+    const fecha = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+    const c1    = document.getElementById('cultivo1').value;
+    const zona  = DATOS.zonas[zonaActual].nombre;
 
     // ── HEADER ──
     pdf.setFillColor(16,26,40); pdf.rect(0,0,W,22,'F');
@@ -1031,23 +1088,10 @@ async function generarPDF(){
     pdf.text('agro',margin+37,14);
     pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(90,127,168);
     pdf.text('CALCULADORA DE MÁRGENES AGRÍCOLAS', margin, 19);
-    pdf.setFontSize(7); pdf.setTextColor(90,127,168);
     pdf.text(fecha, W-margin, 14, {align:'right'});
     pdf.text(`Campaña 2025/26 · ${zona}`, W-margin, 19, {align:'right'});
 
-    let y = 28;
-
-    // ── ASESOR BOX ──
-    if(nombre || empresa){
-      pdf.setFillColor(240,244,255); pdf.roundedRect(margin,y,W-margin*2,empresa&&contacto?16:12,2,2,'F');
-      pdf.setDrawColor(74,158,255); pdf.setLineWidth(0.5);
-      pdf.line(margin,y,margin,empresa&&contacto?y+16:y+12);
-      pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(26,26,46);
-      pdf.text(nombre, margin+4, y+5);
-      if(empresa){ pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.text(empresa, margin+4, y+10); }
-      if(contacto){ pdf.setFontSize(7.5); pdf.setTextColor(90,127,168); pdf.text(contacto, margin+4, y+15); }
-      y += empresa&&contacto ? 22 : 18;
-    }
+    let y = 30;
 
     // ── SECCIÓN RESULTADOS ──
     pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(90,127,168);
@@ -1055,50 +1099,45 @@ async function generarPDF(){
     pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.line(margin,y,W-margin,y); y+=5;
 
     // Leer métricas desde el DOM
-    const metrics = document.querySelectorAll('#metricas .metric');
-    const mData = [];
-    metrics.forEach(m=>{
-      const lbl = m.querySelector('.mlbl')?.textContent?.replace(/[⬟◆]/g,'').trim()||'';
-      const val = m.querySelector('.mval')?.textContent?.trim()||'';
-      const note= m.querySelector('.mnote')?.textContent?.trim()||'';
-      const cls = m.querySelector('.mval')?.className||'';
-      if(lbl) mData.push({lbl,val,note,pos:cls.includes('pos'),neg:cls.includes('neg'),be:cls.includes('be')});
-    });
+    const metrics=[...document.querySelectorAll('#metricas .metric')];
+    const mData=metrics.map(m=>({
+      lbl : m.querySelector('.mlbl')?.textContent?.replace(/[⬟◆]/g,'').trim()||'',
+      val : m.querySelector('.mval')?.textContent?.trim()||'',
+      note: m.querySelector('.mnote')?.textContent?.trim()||'',
+      neg : (m.querySelector('.mval')?.className||'').includes('neg'),
+      be  : (m.querySelector('.mval')?.className||'').includes('be'),
+      pos : (m.querySelector('.mval')?.className||'').includes('pos'),
+    })).filter(m=>m.lbl);
 
-    // Grilla de métricas 3 columnas
     const colW=(W-margin*2-8)/3, rowH=18;
     let col=0, rowY=y;
-    mData.forEach((m,i)=>{
+    mData.forEach(m=>{
       const x=margin+col*(colW+4);
       pdf.setFillColor(248,250,255); pdf.roundedRect(x,rowY,colW,rowH,2,2,'F');
       pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.roundedRect(x,rowY,colW,rowH,2,2,'S');
-      // barra color top
-      const barColor = m.neg?[214,78,58]:m.be?[200,134,10]:m.pos?[42,122,42]:[90,127,168];
-      pdf.setFillColor(...barColor); pdf.roundedRect(x,rowY,colW,1,0.5,0.5,'F');
-      pdf.setFont('helvetica','normal'); pdf.setFontSize(6.5); pdf.setTextColor(90,127,168);
-      pdf.text(m.lbl.toUpperCase(), x+3, rowY+5.5, {maxWidth:colW-6});
-      pdf.setFont('helvetica','bold'); pdf.setFontSize(10);
-      pdf.setTextColor(...barColor);
-      pdf.text(m.val, x+3, rowY+12);
+      const bc=m.neg?[214,78,58]:m.be?[200,134,10]:m.pos?[42,122,42]:[90,127,168];
+      pdf.setFillColor(...bc); pdf.roundedRect(x,rowY,colW,1,0.5,0.5,'F');
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(6); pdf.setTextColor(90,127,168);
+      pdf.text(m.lbl.toUpperCase(),x+3,rowY+5,{maxWidth:colW-6});
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(...bc);
+      pdf.text(m.val,x+3,rowY+12);
       pdf.setFont('helvetica','normal'); pdf.setFontSize(6); pdf.setTextColor(138,154,184);
-      pdf.text(m.note, x+3, rowY+16.5, {maxWidth:colW-6});
+      pdf.text(m.note,x+3,rowY+16.5,{maxWidth:colW-6});
       col++;
-      if(col===3){ col=0; rowY+=rowH+3; }
+      if(col===3){col=0;rowY+=rowH+3;}
     });
     if(col>0) rowY+=rowH+3;
-    y=rowY+4;
+    y=rowY+6;
 
     // ── COSTOS ──
     pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(90,127,168);
     pdf.text('COSTOS DIRECTOS', margin, y); y+=2;
     pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.line(margin,y,W-margin,y); y+=5;
-
-    const costoRows=document.querySelectorAll('#costosGrid .costo-cell');
-    costoRows.forEach((row,i)=>{
+    [...document.querySelectorAll('#costosGrid .costo-cell')].forEach((row,i)=>{
       const name=row.querySelector('.cname')?.textContent?.trim()||'';
       const val =row.querySelector('.cval')?.textContent?.trim().split('\n')[0]||'';
       const isTotal=row.classList.contains('total-row');
-      if(isTotal){pdf.setFillColor(230,236,250);}else{pdf.setFillColor(i%2===0?255:248,i%2===0?255:250,i%2===0?255:255);}
+      pdf.setFillColor(isTotal?230:i%2===0?255:248, isTotal?236:i%2===0?255:250, isTotal?250:255);
       pdf.rect(margin,y-3.5,W-margin*2,6,'F');
       pdf.setFont('helvetica',isTotal?'bold':'normal');
       pdf.setFontSize(8); pdf.setTextColor(isTotal?26:60,isTotal?26:80,isTotal?46:120);
@@ -1113,25 +1152,17 @@ async function generarPDF(){
       pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(90,127,168);
       pdf.text('ANÁLISIS DE SENSIBILIDAD', margin, y); y+=2;
       pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.line(margin,y,W-margin,y); y+=5;
-
-      // Capturar gráficos como imagen
-      const lineCanvas  = document.getElementById('lineChart');
-      const heatCanvas  = document.getElementById('heatmap');
-      const lineImg     = lineCanvas.toDataURL('image/png');
-      const heatImg     = heatCanvas.toDataURL('image/png');
-      const chartW      = (W-margin*2-6)/2;
-      const chartH      = chartW*0.65;
-
-      pdf.setFillColor(248,250,255); pdf.roundedRect(margin,y,chartW,chartH+16,2,2,'F');
+      const lineImg=document.getElementById('lineChart').toDataURL('image/png');
+      const heatImg=document.getElementById('heatmap').toDataURL('image/png');
+      const chartW=(W-margin*2-6)/2, chartH=chartW*0.65;
+      pdf.setFillColor(248,250,255); pdf.roundedRect(margin,y,chartW,chartH+14,2,2,'F');
       pdf.setFontSize(7); pdf.setTextColor(90,127,168);
       pdf.text('MARGEN VS. PRECIO',margin+3,y+5);
       pdf.addImage(lineImg,'PNG',margin+2,y+7,chartW-4,chartH);
-
       const x2=margin+chartW+6;
-      pdf.setFillColor(248,250,255); pdf.roundedRect(x2,y,chartW,chartH+16,2,2,'F');
+      pdf.setFillColor(248,250,255); pdf.roundedRect(x2,y,chartW,chartH+14,2,2,'F');
       pdf.text('MAPA DE CALOR',x2+3,y+5);
       pdf.addImage(heatImg,'PNG',x2+2,y+7,chartW-4,chartH);
-      y+=chartH+20;
     }
 
     // ── FOOTER ──
@@ -1139,16 +1170,16 @@ async function generarPDF(){
     pdf.text('mimargenagro · Valores orientativos, ajustar a cada establecimiento', margin, 287);
     pdf.text(fecha, W-margin, 287, {align:'right'});
 
-    // Guardar
-    const cultNombre = CROP_META[c1]?.nombre||c1;
+    const cultNombre=CROP_META[c1]?.nombre||c1;
     pdf.save(`mimargenagro_${cultNombre}_${zona}_${new Date().toISOString().slice(0,10)}.pdf`);
 
-  } catch(err) {
-    console.error('Error generando PDF:', err);
+  } catch(err){
+    console.error('Error PDF:', err);
     alert('Error al generar el PDF. Por favor intentá de nuevo.');
   }
 
-  btnPdf.disabled=false; btnPdf.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg> Exportar PDF';
+  btnPdf.disabled=false;
+  btnPdf.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg> Exportar PDF';
 }
 
 // ══ WHATSAPP ══
