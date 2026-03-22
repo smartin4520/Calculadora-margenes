@@ -5,272 +5,308 @@
     "estructura": "zonas → cultivo → ítems de costo + precioRef + rindeRef",
     "ultima_actualizacion": "2025/26 — Campaña en curso"
   },
-
   "zonas": {
     "nucleo": {
       "nombre": "Zona Núcleo",
       "descripcion": "Sur de Santa Fe / Norte de Buenos Aires",
       "cultivos": {
         "soja": {
-          "semilla":        90,
+          "semilla": 90,
           "fertilizacion": 120,
-          "agroquimicos":  125,
-          "labranza":       80,
-          "cosecha":       130,
-          "flete":          40,
-          "rindeRef":       38,
-          "precioRef":     340
+          "agroquimicos": 125,
+          "labranza": 80,
+          "cosecha": 130,
+          "flete": 40,
+          "rindeRef": 38,
+          "precioRef": 340
         },
         "maiz": {
-          "semilla":       165,
+          "semilla": 165,
           "fertilizacion": 220,
-          "agroquimicos":  105,
-          "labranza":       80,
-          "cosecha":       240,
-          "flete":          45,
-          "rindeRef":       95,
-          "precioRef":     185
+          "agroquimicos": 105,
+          "labranza": 80,
+          "cosecha": 240,
+          "flete": 45,
+          "rindeRef": 95,
+          "precioRef": 185
         },
         "trigo": {
-          "semilla":        72,
+          "semilla": 72,
           "fertilizacion": 170,
-          "agroquimicos":   95,
-          "labranza":       80,
-          "cosecha":       210,
-          "flete":          40,
-          "rindeRef":       48,
-          "precioRef":     220
+          "agroquimicos": 95,
+          "labranza": 80,
+          "cosecha": 210,
+          "flete": 40,
+          "rindeRef": 48,
+          "precioRef": 220
         },
         "colza": {
-          "semilla":        82,
+          "semilla": 82,
           "fertilizacion": 155,
-          "agroquimicos":  115,
-          "labranza":       80,
-          "cosecha":       265,
-          "flete":          40,
-          "rindeRef":       30,
-          "precioRef":     460
+          "agroquimicos": 115,
+          "labranza": 80,
+          "cosecha": 265,
+          "flete": 40,
+          "rindeRef": 30,
+          "precioRef": 460
         },
         "girasol": {
-          "semilla":       105,
+          "semilla": 105,
           "fertilizacion": 105,
-          "agroquimicos":   95,
-          "labranza":       80,
-          "cosecha":       215,
-          "flete":          40,
-          "rindeRef":       28,
-          "precioRef":     390
+          "agroquimicos": 95,
+          "labranza": 80,
+          "cosecha": 215,
+          "flete": 40,
+          "rindeRef": 28,
+          "precioRef": 390
         },
         "doble": {
-          "semilla":       165,
+          "semilla": 165,
           "fertilizacion": 320,
-          "agroquimicos":  215,
-          "labranza":      130,
-          "cosecha":       250,
-          "flete":          70,
-          "rindeRef":       95,
-          "precioRef":     270
+          "agroquimicos": 215,
+          "labranza": 130,
+          "cosecha": 250,
+          "flete": 70,
+          "rindeRef": 95,
+          "precioRef": 270
+        },
+        "doble_cm": {
+          "semilla": 245,
+          "fertilizacion": 370,
+          "agroquimicos": 215,
+          "labranza": 130,
+          "cosecha": 490,
+          "flete": 80,
+          "rindeRef": 28,
+          "precioRef": 380
         }
       }
     },
-
     "sur_cordoba": {
       "nombre": "Sur de Córdoba",
       "descripcion": "Centro-sur de Córdoba",
       "cultivos": {
         "soja": {
-          "semilla":        88,
+          "semilla": 88,
           "fertilizacion": 115,
-          "agroquimicos":  120,
-          "labranza":       78,
-          "cosecha":       128,
-          "flete":          45,
-          "rindeRef":       35,
-          "precioRef":     340
+          "agroquimicos": 120,
+          "labranza": 78,
+          "cosecha": 128,
+          "flete": 45,
+          "rindeRef": 35,
+          "precioRef": 340
         },
         "maiz": {
-          "semilla":       162,
+          "semilla": 162,
           "fertilizacion": 210,
-          "agroquimicos":  100,
-          "labranza":       78,
-          "cosecha":       235,
-          "flete":          50,
-          "rindeRef":       90,
-          "precioRef":     185
+          "agroquimicos": 100,
+          "labranza": 78,
+          "cosecha": 235,
+          "flete": 50,
+          "rindeRef": 90,
+          "precioRef": 185
         },
         "trigo": {
-          "semilla":        70,
+          "semilla": 70,
           "fertilizacion": 162,
-          "agroquimicos":   90,
-          "labranza":       78,
-          "cosecha":       205,
-          "flete":          45,
-          "rindeRef":       44,
-          "precioRef":     220
+          "agroquimicos": 90,
+          "labranza": 78,
+          "cosecha": 205,
+          "flete": 45,
+          "rindeRef": 44,
+          "precioRef": 220
         },
         "colza": {
-          "semilla":        80,
+          "semilla": 80,
           "fertilizacion": 148,
-          "agroquimicos":  110,
-          "labranza":       78,
-          "cosecha":       258,
-          "flete":          45,
-          "rindeRef":       27,
-          "precioRef":     460
+          "agroquimicos": 110,
+          "labranza": 78,
+          "cosecha": 258,
+          "flete": 45,
+          "rindeRef": 27,
+          "precioRef": 460
         },
         "girasol": {
-          "semilla":       102,
+          "semilla": 102,
           "fertilizacion": 100,
-          "agroquimicos":   90,
-          "labranza":       78,
-          "cosecha":       210,
-          "flete":          45,
-          "rindeRef":       26,
-          "precioRef":     390
+          "agroquimicos": 90,
+          "labranza": 78,
+          "cosecha": 210,
+          "flete": 45,
+          "rindeRef": 26,
+          "precioRef": 390
         },
         "doble": {
-          "semilla":       162,
+          "semilla": 162,
           "fertilizacion": 308,
-          "agroquimicos":  210,
-          "labranza":      128,
-          "cosecha":       242,
-          "flete":          75,
-          "rindeRef":       88,
-          "precioRef":     270
+          "agroquimicos": 210,
+          "labranza": 128,
+          "cosecha": 242,
+          "flete": 75,
+          "rindeRef": 88,
+          "precioRef": 270
+        },
+        "doble_cm": {
+          "semilla": 242,
+          "fertilizacion": 358,
+          "agroquimicos": 210,
+          "labranza": 128,
+          "cosecha": 478,
+          "flete": 85,
+          "rindeRef": 26,
+          "precioRef": 380
         }
       }
     },
-
     "sudeste_bsas": {
       "nombre": "Sudeste Bonaerense",
       "descripcion": "Buenos Aires sudeste (cuenca del Salado y sur)",
       "cultivos": {
         "soja": {
-          "semilla":        85,
+          "semilla": 85,
           "fertilizacion": 108,
-          "agroquimicos":  115,
-          "labranza":       82,
-          "cosecha":       125,
-          "flete":          55,
-          "rindeRef":       30,
-          "precioRef":     340
+          "agroquimicos": 115,
+          "labranza": 82,
+          "cosecha": 125,
+          "flete": 55,
+          "rindeRef": 30,
+          "precioRef": 340
         },
         "maiz": {
-          "semilla":       158,
+          "semilla": 158,
           "fertilizacion": 195,
-          "agroquimicos":   98,
-          "labranza":       82,
-          "cosecha":       228,
-          "flete":          58,
-          "rindeRef":       80,
-          "precioRef":     185
+          "agroquimicos": 98,
+          "labranza": 82,
+          "cosecha": 228,
+          "flete": 58,
+          "rindeRef": 80,
+          "precioRef": 185
         },
         "trigo": {
-          "semilla":        68,
+          "semilla": 68,
           "fertilizacion": 155,
-          "agroquimicos":   88,
-          "labranza":       82,
-          "cosecha":       198,
-          "flete":          55,
-          "rindeRef":       40,
-          "precioRef":     220
+          "agroquimicos": 88,
+          "labranza": 82,
+          "cosecha": 198,
+          "flete": 55,
+          "rindeRef": 40,
+          "precioRef": 220
         },
         "colza": {
-          "semilla":        78,
+          "semilla": 78,
           "fertilizacion": 142,
-          "agroquimicos":  108,
-          "labranza":       82,
-          "cosecha":       252,
-          "flete":          55,
-          "rindeRef":       24,
-          "precioRef":     460
+          "agroquimicos": 108,
+          "labranza": 82,
+          "cosecha": 252,
+          "flete": 55,
+          "rindeRef": 24,
+          "precioRef": 460
         },
         "girasol": {
-          "semilla":        98,
-          "fertilizacion":  95,
-          "agroquimicos":   88,
-          "labranza":       82,
-          "cosecha":       205,
-          "flete":          55,
-          "rindeRef":       22,
-          "precioRef":     390
+          "semilla": 98,
+          "fertilizacion": 95,
+          "agroquimicos": 88,
+          "labranza": 82,
+          "cosecha": 205,
+          "flete": 55,
+          "rindeRef": 22,
+          "precioRef": 390
         },
         "doble": {
-          "semilla":       158,
+          "semilla": 158,
           "fertilizacion": 295,
-          "agroquimicos":  205,
-          "labranza":      128,
-          "cosecha":       235,
-          "flete":          88,
-          "rindeRef":       80,
-          "precioRef":     270
+          "agroquimicos": 205,
+          "labranza": 128,
+          "cosecha": 235,
+          "flete": 88,
+          "rindeRef": 80,
+          "precioRef": 270
+        },
+        "doble_cm": {
+          "semilla": 236,
+          "fertilizacion": 342,
+          "agroquimicos": 205,
+          "labranza": 128,
+          "cosecha": 462,
+          "flete": 95,
+          "rindeRef": 23,
+          "precioRef": 380
         }
       }
     },
-
     "oeste_lapampa": {
       "nombre": "Oeste Bonaerense / La Pampa",
       "descripcion": "Oeste de Buenos Aires y La Pampa",
       "cultivos": {
         "soja": {
-          "semilla":        82,
+          "semilla": 82,
           "fertilizacion": 100,
-          "agroquimicos":  110,
-          "labranza":       80,
-          "cosecha":       120,
-          "flete":          65,
-          "rindeRef":       26,
-          "precioRef":     340
+          "agroquimicos": 110,
+          "labranza": 80,
+          "cosecha": 120,
+          "flete": 65,
+          "rindeRef": 26,
+          "precioRef": 340
         },
         "maiz": {
-          "semilla":       155,
+          "semilla": 155,
           "fertilizacion": 185,
-          "agroquimicos":   95,
-          "labranza":       80,
-          "cosecha":       220,
-          "flete":          68,
-          "rindeRef":       72,
-          "precioRef":     185
+          "agroquimicos": 95,
+          "labranza": 80,
+          "cosecha": 220,
+          "flete": 68,
+          "rindeRef": 72,
+          "precioRef": 185
         },
         "trigo": {
-          "semilla":        65,
+          "semilla": 65,
           "fertilizacion": 148,
-          "agroquimicos":   85,
-          "labranza":       80,
-          "cosecha":       190,
-          "flete":          65,
-          "rindeRef":       36,
-          "precioRef":     220
+          "agroquimicos": 85,
+          "labranza": 80,
+          "cosecha": 190,
+          "flete": 65,
+          "rindeRef": 36,
+          "precioRef": 220
         },
         "colza": {
-          "semilla":        75,
+          "semilla": 75,
           "fertilizacion": 135,
-          "agroquimicos":  105,
-          "labranza":       80,
-          "cosecha":       245,
-          "flete":          65,
-          "rindeRef":       22,
-          "precioRef":     460
+          "agroquimicos": 105,
+          "labranza": 80,
+          "cosecha": 245,
+          "flete": 65,
+          "rindeRef": 22,
+          "precioRef": 460
         },
         "girasol": {
-          "semilla":        95,
-          "fertilizacion":  90,
-          "agroquimicos":   85,
-          "labranza":       80,
-          "cosecha":       198,
-          "flete":          65,
-          "rindeRef":       20,
-          "precioRef":     390
+          "semilla": 95,
+          "fertilizacion": 90,
+          "agroquimicos": 85,
+          "labranza": 80,
+          "cosecha": 198,
+          "flete": 65,
+          "rindeRef": 20,
+          "precioRef": 390
         },
         "doble": {
-          "semilla":       155,
+          "semilla": 155,
           "fertilizacion": 282,
-          "agroquimicos":  198,
-          "labranza":      125,
-          "cosecha":       228,
-          "flete":          98,
-          "rindeRef":       75,
-          "precioRef":     270
+          "agroquimicos": 198,
+          "labranza": 125,
+          "cosecha": 228,
+          "flete": 98,
+          "rindeRef": 75,
+          "precioRef": 270
+        },
+        "doble_cm": {
+          "semilla": 228,
+          "fertilizacion": 318,
+          "agroquimicos": 198,
+          "labranza": 125,
+          "cosecha": 445,
+          "flete": 108,
+          "rindeRef": 20,
+          "precioRef": 380
         }
       }
     }
