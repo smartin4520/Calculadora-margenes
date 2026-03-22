@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>mimargenagro — Calculadora de Márgenes</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Barlow+Condensed:wght@300;400;600;700;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#080d14;--surface:#0d1520;--card:#101a28;--card2:#142030;--border:#1c2e44;--border2:#243a56;--muted:#2e4a6a;--text:#c8daf0;--text-dim:#5a7fa8;--text-faint:#2a4060;--red:#d64e3a;--mono:'IBM Plex Mono',monospace;--display:'Barlow Condensed',sans-serif;--accent:#4a9eff;--accent2:#6db3ff;--accent-rgb:74,158,255;}
@@ -207,6 +209,83 @@ button{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:
 .load-spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font-family:var(--mono);font-size:8px;color:var(--text-faint);letter-spacing:1px;border-top:1px solid var(--border);}
+
+/* ── EXPORT BUTTONS ── */
+.export-row{
+  display:flex;gap:10px;flex-wrap:wrap;
+  padding:16px 0 4px;
+}
+.btn-export{
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:1.5px;text-transform:uppercase;
+  padding:10px 18px;border:none;border-radius:3px;
+  cursor:pointer;transition:all .15s;
+  display:flex;align-items:center;gap:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-pdf{background:var(--red);color:#fff;}
+.btn-pdf:hover{filter:brightness(1.15);transform:translateY(-1px);}
+.btn-wsp{background:#25d366;color:#fff;}
+.btn-wsp:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-export:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+/* ── ASESOR MODAL ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:1000;
+  background:rgba(0,0,0,.7);
+  align-items:center;justify-content:center;
+  padding:20px;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:8px;padding:32px;width:100%;max-width:480px;
+  position:relative;
+}
+.modal-title{
+  font-family:var(--display);font-size:22px;font-weight:700;
+  color:var(--text);margin-bottom:6px;letter-spacing:1px;
+}
+.modal-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:20px;}
+.modal-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.modal-field{display:flex;flex-direction:column;gap:5px;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;}
+.btn-modal-ok{background:var(--accent);color:var(--bg);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;padding:12px 24px;border:none;border-radius:3px;cursor:pointer;transition:all .15s;}
+.btn-modal-ok:hover{filter:brightness(1.1);}
+.btn-modal-cancel{background:transparent;color:var(--muted);border:1px solid var(--border2);font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:2px;text-transform:uppercase;padding:12px 24px;border-radius:3px;cursor:pointer;}
+.btn-modal-cancel:hover{border-color:var(--text-dim);color:var(--text-dim);}
+
+/* ── PDF TEMPLATE (oculto, solo para captura) ── */
+#pdfTemplate{
+  display:none;
+  position:fixed;left:-9999px;top:0;
+  width:794px;background:#fff;
+  font-family:'Barlow Condensed',Arial Narrow,sans-serif;
+  color:#1a1a2e;padding:40px 48px;
+}
+.pdf-header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:3px solid #101a28;margin-bottom:24px;}
+.pdf-logo-text{font-size:32px;font-weight:900;letter-spacing:-1px;color:#101a28;}
+.pdf-logo-text span{color:#4a9eff;}
+.pdf-meta{text-align:right;font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a7fa8;line-height:1.8;}
+.pdf-asesor-box{background:#f0f4ff;border-left:3px solid #4a9eff;padding:10px 16px;margin-bottom:20px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#1a1a2e;line-height:1.8;}
+.pdf-section-title{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#5a7fa8;margin:20px 0 10px;padding-bottom:6px;border-bottom:1px solid #e0e6f0;}
+.pdf-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.pdf-metric{background:#f8faff;border:1px solid #e0e6f0;border-radius:4px;padding:12px 14px;}
+.pdf-metric-lbl{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#5a7fa8;margin-bottom:6px;}
+.pdf-metric-val{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:#101a28;}
+.pdf-metric-val.pos{color:#2a7a2a;}
+.pdf-metric-val.neg{color:#d64e3a;}
+.pdf-metric-val.be{color:#c8860a;}
+.pdf-metric-note{font-family:'IBM Plex Mono',monospace;font-size:8px;color:#8a9ab8;margin-top:3px;}
+.pdf-costos{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:10px;}
+.pdf-costos td{padding:7px 12px;border-bottom:1px solid #e0e6f0;}
+.pdf-costos tr:last-child td{border-bottom:none;font-weight:600;background:#f0f4ff;}
+.pdf-costos td:last-child{text-align:right;}
+.pdf-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;}
+.pdf-chart-box{background:#f8faff;border:1px solid #e0e6f0;border-radius:4px;padding:12px;}
+.pdf-chart-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#5a7fa8;margin-bottom:8px;}
+.pdf-footer{margin-top:24px;padding-top:12px;border-top:1px solid #e0e6f0;font-family:'IBM Plex Mono',monospace;font-size:8px;color:#8a9ab8;display:flex;justify-content:space-between;}
+
 </style>
 </head>
 <body data-cultivo="soja">
@@ -349,7 +428,19 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
     </div>
     <div id="resultado">
       <div class="sec">03 &nbsp; Resultados</div>
-      <div class="card"><div class="tline" id="resTline"></div><div id="metricas"></div></div>
+      <div class="card"><div class="tline" id="resTline"></div><div id="metricas"></div>
+        <!-- Botones de exportación -->
+        <div class="export-row" id="exportRow" style="display:none;">
+          <button class="btn-export btn-pdf" onclick="exportarPDF()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+            Exportar PDF
+          </button>
+          <button class="btn-export btn-wsp" onclick="compartirWhatsApp()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+            Compartir WhatsApp
+          </button>
+        </div>
+      </div>
     </div>
     <div id="graficos">
       <div class="sec">04 &nbsp; Análisis de sensibilidad</div>
@@ -381,6 +472,63 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
   </div>
 </main>
 <footer>© mimargenagro · CALCULADORA DE MÁRGENES AGRÍCOLAS · VALORES ORIENTATIVOS — AJUSTAR A CADA ESTABLECIMIENTO</footer>
+
+<!-- MODAL DATOS ASESOR -->
+<div class="modal-overlay" id="modalAsesor">
+  <div class="modal-box">
+    <div class="modal-title">Datos del informe</div>
+    <div class="modal-sub">ESTOS DATOS APARECEN EN EL ENCABEZADO DEL PDF</div>
+    <div class="modal-fields">
+      <div class="modal-field">
+        <label>Nombre del asesor</label>
+        <input type="text" id="asesorNombre" placeholder="Ing. Juan García" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
+      </div>
+      <div class="modal-field">
+        <label>Empresa / Estudio</label>
+        <input type="text" id="asesorEmpresa" placeholder="Agro Consulting S.R.L." style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
+      </div>
+      <div class="modal-field">
+        <label>Teléfono / Email — opcional</label>
+        <input type="text" id="asesorContacto" placeholder="+54 9 11 1234-5678" style="background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:10px 14px;font-family:var(--mono);font-size:13px;border-radius:3px;outline:none;width:100%;">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-modal-ok" onclick="generarPDF()">Generar PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF TEMPLATE -->
+<div id="pdfTemplate">
+  <div class="pdf-header">
+    <div>
+      <div class="pdf-logo-text">mi<span>margen</span>agro</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:#5a7fa8;letter-spacing:2px;margin-top:3px;">CALCULADORA DE MÁRGENES AGRÍCOLAS</div>
+    </div>
+    <div class="pdf-meta" id="pdfMeta"></div>
+  </div>
+  <div class="pdf-asesor-box" id="pdfAsesorBox"></div>
+  <div class="pdf-section-title">Resultados del análisis</div>
+  <div class="pdf-metrics" id="pdfMetrics"></div>
+  <div class="pdf-section-title">Costos directos</div>
+  <table class="pdf-costos" id="pdfCostos"></table>
+  <div class="pdf-section-title">Análisis de sensibilidad</div>
+  <div class="pdf-charts">
+    <div class="pdf-chart-box">
+      <div class="pdf-chart-title">Margen vs. Precio</div>
+      <img id="pdfLineImg" style="width:100%;border-radius:2px;">
+    </div>
+    <div class="pdf-chart-box">
+      <div class="pdf-chart-title">Mapa de calor</div>
+      <img id="pdfHeatImg" style="width:100%;border-radius:2px;">
+    </div>
+  </div>
+  <div class="pdf-footer">
+    <span>mimargenagro.com · Valores orientativos, ajustar a cada establecimiento</span>
+    <span id="pdfFecha"></span>
+  </div>
+</div>
 <script>
 let DATOS=null,zonaActual=null,comparando=false,lineChart=null,heatmapChart=null;
 const CROP_META={
@@ -424,6 +572,8 @@ function inicializar(){
     b.onclick=()=>seleccionarZona(key);btns.appendChild(b);
   }
   seleccionarZona(Object.keys(DATOS.zonas)[0]);
+  // Cargar parámetros de URL si vienen de un link compartido
+  cargarDesdeURL();
 }
 
 function seleccionarZona(key){
@@ -614,6 +764,7 @@ function calcular(){
   document.getElementById('metricas').innerHTML=html;
   document.getElementById('resultado').style.display='block';
   document.getElementById('graficos').style.display='block';
+  document.getElementById('exportRow').style.display='flex';
   setTimeout(()=>document.getElementById('resultado').scrollIntoView({behavior:'smooth',block:'start'}),80);
   generarLinea(c1,r1,p1);
   generarHeatmap(c1,r1,p1);
@@ -671,6 +822,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 function resetearSilencioso(){
   document.getElementById('resultado').style.display='none';
   document.getElementById('graficos').style.display='none';
+  document.getElementById('exportRow').style.display='none';
   if(lineChart){lineChart.destroy();lineChart=null;}
   if(heatmapChart){heatmapChart.destroy();heatmapChart=null;}
 }
@@ -777,24 +929,30 @@ function generarHeatmap(cultivo,rBase,pBase){
   const yL=[...new Set(data.map(d=>d.y))].sort((a,b)=>a-b);
   const NP2=xL.length, NR2=yL.length;
   const hp={id:'heatDraw',beforeDatasetsDraw(chart){
-    const{ctx:c,chartArea:{left,right,top,bottom}}=chart;
-    const cw=(right-left)/NP2,ch=(bottom-top)/NR2;
+    const{ctx:c,chartArea:{left,right,top,bottom},scales}=chart;
+    const xScale=scales.x, yScale=scales.y;
     for(const d of data){
-      const xi=xL.indexOf(d.x),yi=yL.indexOf(d.y);
-      const px=left+xi*cw,py=top+(NR2-1-yi)*ch;
-      c.fillStyle=marginColor(d.v,vMin,vMax);c.fillRect(px+1,py+1,cw-2,ch-2);
+      const xi=xL.indexOf(d.x);
+      const yi=yL.indexOf(d.y);
+      if(xi<0||yi<0) continue;
+      const xCenter=xScale.getPixelForValue(xi);
+      const yCenter=yScale.getPixelForValue(yL.length-1-yi);
+      const cw=(right-left)/NP2, ch=(bottom-top)/NR2;
+      const px=xCenter-cw/2, py=yCenter-ch/2;
+      c.fillStyle=marginColor(d.v,vMin,vMax);
+      c.fillRect(px+1,py+1,cw-2,ch-2);
       const fs=Math.max(7,Math.min(11,cw*0.22));
       c.font=`600 ${fs}px IBM Plex Mono,monospace`;
       c.fillStyle=d.v<0?'rgba(255,255,255,.55)':'rgba(0,0,0,.55)';
       c.textAlign='center';c.textBaseline='middle';
-      c.fillText(d.v>=0?'+'+d.v:''+d.v,px+cw/2,py+ch/2);
+      c.fillText(d.v>=0?'+'+d.v:''+d.v,xCenter,yCenter);
     }
   }};
   heatmapChart=new Chart(ctx,{type:'scatter',data:{datasets:[{data:[]}]},
     options:{responsive:true,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},
     scales:{
-      x:{type:'linear',min:xL[0]-(xL[1]-xL[0])/2,max:xL[xL.length-1]+(xL[1]-xL[0])/2,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:7},maxTicksLimit:20,callback:v=>{const i=xL.findIndex(l=>Math.abs(l-v)<(xL[1]-xL[0])*.4);return i>=0?'$'+xL[i]:''}},grid:{color:'#111e30'},title:{display:true,text:'Precio (USD/tn)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}},
-      y:{type:'linear',min:yL[0]-(yL[1]-yL[0])/2,max:yL[yL.length-1]+(yL[1]-yL[0])/2,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:8},callback:v=>{const i=yL.findIndex(l=>Math.abs(l-v)<(yL[1]-yL[0])*.4);return i>=0?yL[i]+' qq':''}},grid:{color:'#111e30'},title:{display:true,text:'Rinde (qq/ha)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}}
+      x:{type:'category',labels:xL.map(v=>'$'+v),offset:true,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:7},maxRotation:45,minRotation:45},grid:{display:false},title:{display:true,text:'Precio (USD/tn)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}},
+      y:{type:'category',labels:yL.map(v=>v+' qq'),offset:true,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:8}},grid:{display:false},title:{display:true,text:'Rinde (qq/ha)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}}
     }},plugins:[hp]});
 }
 
@@ -834,6 +992,243 @@ function renderCostos(cultivo){
     </div>`;
   }
   document.getElementById('costosGrid').innerHTML=h;
+}
+
+// ══ PDF ══
+function exportarPDF(){
+  // Abrir modal para datos del asesor
+  document.getElementById('modalAsesor').classList.add('open');
+}
+function cerrarModal(){
+  document.getElementById('modalAsesor').classList.remove('open');
+}
+
+async function generarPDF(){
+  cerrarModal();
+  const btnPdf=document.querySelector('.btn-pdf');
+  btnPdf.disabled=true; btnPdf.textContent='⏳ Generando...';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W=210, margin=14;
+
+    // ── Datos asesor y meta ──
+    const nombre   = document.getElementById('asesorNombre').value  || 'mimargenagro';
+    const empresa  = document.getElementById('asesorEmpresa').value || '';
+    const contacto = document.getElementById('asesorContacto').value|| '';
+    const fecha    = new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'long',year:'numeric'});
+    const c1       = document.getElementById('cultivo1').value;
+    const zona     = DATOS.zonas[zonaActual].nombre;
+
+    // ── HEADER ──
+    pdf.setFillColor(16,26,40); pdf.rect(0,0,W,22,'F');
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(18); pdf.setTextColor(200,218,240);
+    pdf.text('mi',margin,14);
+    pdf.setTextColor(74,158,255);
+    pdf.text('margen',margin+10,14);
+    pdf.setTextColor(200,218,240);
+    pdf.text('agro',margin+37,14);
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(90,127,168);
+    pdf.text('CALCULADORA DE MÁRGENES AGRÍCOLAS', margin, 19);
+    pdf.setFontSize(7); pdf.setTextColor(90,127,168);
+    pdf.text(fecha, W-margin, 14, {align:'right'});
+    pdf.text(`Campaña 2025/26 · ${zona}`, W-margin, 19, {align:'right'});
+
+    let y = 28;
+
+    // ── ASESOR BOX ──
+    if(nombre || empresa){
+      pdf.setFillColor(240,244,255); pdf.roundedRect(margin,y,W-margin*2,empresa&&contacto?16:12,2,2,'F');
+      pdf.setDrawColor(74,158,255); pdf.setLineWidth(0.5);
+      pdf.line(margin,y,margin,empresa&&contacto?y+16:y+12);
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(9); pdf.setTextColor(26,26,46);
+      pdf.text(nombre, margin+4, y+5);
+      if(empresa){ pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.text(empresa, margin+4, y+10); }
+      if(contacto){ pdf.setFontSize(7.5); pdf.setTextColor(90,127,168); pdf.text(contacto, margin+4, y+15); }
+      y += empresa&&contacto ? 22 : 18;
+    }
+
+    // ── SECCIÓN RESULTADOS ──
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(90,127,168);
+    pdf.text('RESULTADOS DEL ANÁLISIS', margin, y); y+=2;
+    pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.line(margin,y,W-margin,y); y+=5;
+
+    // Leer métricas desde el DOM
+    const metrics = document.querySelectorAll('#metricas .metric');
+    const mData = [];
+    metrics.forEach(m=>{
+      const lbl = m.querySelector('.mlbl')?.textContent?.replace(/[⬟◆]/g,'').trim()||'';
+      const val = m.querySelector('.mval')?.textContent?.trim()||'';
+      const note= m.querySelector('.mnote')?.textContent?.trim()||'';
+      const cls = m.querySelector('.mval')?.className||'';
+      if(lbl) mData.push({lbl,val,note,pos:cls.includes('pos'),neg:cls.includes('neg'),be:cls.includes('be')});
+    });
+
+    // Grilla de métricas 3 columnas
+    const colW=(W-margin*2-8)/3, rowH=18;
+    let col=0, rowY=y;
+    mData.forEach((m,i)=>{
+      const x=margin+col*(colW+4);
+      pdf.setFillColor(248,250,255); pdf.roundedRect(x,rowY,colW,rowH,2,2,'F');
+      pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.roundedRect(x,rowY,colW,rowH,2,2,'S');
+      // barra color top
+      const barColor = m.neg?[214,78,58]:m.be?[200,134,10]:m.pos?[42,122,42]:[90,127,168];
+      pdf.setFillColor(...barColor); pdf.roundedRect(x,rowY,colW,1,0.5,0.5,'F');
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(6.5); pdf.setTextColor(90,127,168);
+      pdf.text(m.lbl.toUpperCase(), x+3, rowY+5.5, {maxWidth:colW-6});
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(10);
+      pdf.setTextColor(...barColor);
+      pdf.text(m.val, x+3, rowY+12);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(6); pdf.setTextColor(138,154,184);
+      pdf.text(m.note, x+3, rowY+16.5, {maxWidth:colW-6});
+      col++;
+      if(col===3){ col=0; rowY+=rowH+3; }
+    });
+    if(col>0) rowY+=rowH+3;
+    y=rowY+4;
+
+    // ── COSTOS ──
+    pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(90,127,168);
+    pdf.text('COSTOS DIRECTOS', margin, y); y+=2;
+    pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.line(margin,y,W-margin,y); y+=5;
+
+    const costoRows=document.querySelectorAll('#costosGrid .costo-cell');
+    costoRows.forEach((row,i)=>{
+      const name=row.querySelector('.cname')?.textContent?.trim()||'';
+      const val =row.querySelector('.cval')?.textContent?.trim().split('\n')[0]||'';
+      const isTotal=row.classList.contains('total-row');
+      if(isTotal){pdf.setFillColor(230,236,250);}else{pdf.setFillColor(i%2===0?255:248,i%2===0?255:250,i%2===0?255:255);}
+      pdf.rect(margin,y-3.5,W-margin*2,6,'F');
+      pdf.setFont('helvetica',isTotal?'bold':'normal');
+      pdf.setFontSize(8); pdf.setTextColor(isTotal?26:60,isTotal?26:80,isTotal?46:120);
+      pdf.text(name,margin+3,y);
+      pdf.text(val,W-margin-3,y,{align:'right'});
+      y+=6;
+    });
+    y+=6;
+
+    // ── GRÁFICOS ──
+    if(lineChart && heatmapChart){
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.setTextColor(90,127,168);
+      pdf.text('ANÁLISIS DE SENSIBILIDAD', margin, y); y+=2;
+      pdf.setDrawColor(224,230,240); pdf.setLineWidth(0.3); pdf.line(margin,y,W-margin,y); y+=5;
+
+      // Capturar gráficos como imagen
+      const lineCanvas  = document.getElementById('lineChart');
+      const heatCanvas  = document.getElementById('heatmap');
+      const lineImg     = lineCanvas.toDataURL('image/png');
+      const heatImg     = heatCanvas.toDataURL('image/png');
+      const chartW      = (W-margin*2-6)/2;
+      const chartH      = chartW*0.65;
+
+      pdf.setFillColor(248,250,255); pdf.roundedRect(margin,y,chartW,chartH+16,2,2,'F');
+      pdf.setFontSize(7); pdf.setTextColor(90,127,168);
+      pdf.text('MARGEN VS. PRECIO',margin+3,y+5);
+      pdf.addImage(lineImg,'PNG',margin+2,y+7,chartW-4,chartH);
+
+      const x2=margin+chartW+6;
+      pdf.setFillColor(248,250,255); pdf.roundedRect(x2,y,chartW,chartH+16,2,2,'F');
+      pdf.text('MAPA DE CALOR',x2+3,y+5);
+      pdf.addImage(heatImg,'PNG',x2+2,y+7,chartW-4,chartH);
+      y+=chartH+20;
+    }
+
+    // ── FOOTER ──
+    pdf.setFont('helvetica','normal'); pdf.setFontSize(7); pdf.setTextColor(180,190,210);
+    pdf.text('mimargenagro · Valores orientativos, ajustar a cada establecimiento', margin, 287);
+    pdf.text(fecha, W-margin, 287, {align:'right'});
+
+    // Guardar
+    const cultNombre = CROP_META[c1]?.nombre||c1;
+    pdf.save(`mimargenagro_${cultNombre}_${zona}_${new Date().toISOString().slice(0,10)}.pdf`);
+
+  } catch(err) {
+    console.error('Error generando PDF:', err);
+    alert('Error al generar el PDF. Por favor intentá de nuevo.');
+  }
+
+  btnPdf.disabled=false; btnPdf.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg> Exportar PDF';
+}
+
+// ══ WHATSAPP ══
+function compartirWhatsApp(){
+  const c1    = document.getElementById('cultivo1').value;
+  const meta1 = CROP_META[c1];
+  const zona  = DATOS.zonas[zonaActual].nombre;
+
+  // Leer métricas del DOM
+  const metrics = document.querySelectorAll('#metricas .metric');
+  let resumen = '';
+  metrics.forEach(m=>{
+    const lbl = m.querySelector('.mlbl')?.textContent?.replace(/[⬟◆]/g,'').trim()||'';
+    const val = m.querySelector('.mval')?.textContent?.trim()||'';
+    if(lbl&&val) resumen += `• ${lbl}: *${val}*\n`;
+  });
+
+  // Construir parámetros para URL compartible
+  const params = new URLSearchParams();
+  params.set('zona', zonaActual);
+  params.set('c1', c1);
+  const r1=document.getElementById('rinde1').value;
+  const p1=document.getElementById('precio1').value;
+  if(r1) params.set('r1', r1);
+  if(p1) params.set('p1', p1);
+  const sup=document.getElementById('sup1').value;
+  if(sup) params.set('sup', sup);
+  const alqQq=document.getElementById('alqQq').value;
+  if(alqQq){ params.set('alqQq',alqQq); params.set('alqPs',document.getElementById('alqPrecioSoja').value); }
+
+  const baseUrl = window.location.href.split('?')[0];
+  const linkUrl = `${baseUrl}?${params.toString()}`;
+
+  const texto = `🌾 *mimargenagro — Análisis de márgenes*\n\n` +
+    `📍 Zona: ${zona}\n` +
+    `🌱 Cultivo: ${meta1.nombre}\n\n` +
+    `*Resultados:*\n${resumen}\n` +
+    `🔗 Ver análisis completo:\n${linkUrl}\n\n` +
+    `_Calculado con mimargenagro.com_`;
+
+  const wspUrl = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  window.open(wspUrl, '_blank');
+}
+
+// ══ CARGAR PARÁMETROS DESDE URL ══
+function cargarDesdeURL(){
+  const params = new URLSearchParams(window.location.search);
+  if(!params.has('zona')) return;
+
+  const zona = params.get('zona');
+  const c1   = params.get('c1');
+  const r1   = params.get('r1');
+  const p1   = params.get('p1');
+  const sup  = params.get('sup');
+  const alqQq= params.get('alqQq');
+  const alqPs= params.get('alqPs');
+
+  // Seleccionar zona
+  if(zona && DATOS.zonas[zona]) seleccionarZona(zona);
+
+  // Seleccionar cultivo y datos
+  if(c1){
+    const sel=document.getElementById('cultivo1');
+    if(sel) { sel.value=c1; onCultivo1Change(); }
+  }
+  if(r1) document.getElementById('rinde1').value=r1;
+  if(p1) document.getElementById('precio1').value=p1;
+  if(sup) document.getElementById('sup1').value=sup;
+
+  // Alquiler
+  if(alqQq&&alqPs){
+    document.getElementById('alqSwitch').checked=true;
+    toggleAlquiler();
+    document.getElementById('alqQq').value=alqQq;
+    document.getElementById('alqPrecioSoja').value=alqPs;
+    actualizarEquivAlq();
+  }
+
+  // Calcular automáticamente si hay suficientes datos
+  if(r1&&p1) setTimeout(calcular, 300);
 }
 
 cargarDatos();
