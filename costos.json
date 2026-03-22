@@ -2,7 +2,7 @@
   "_instrucciones": {
     "descripcion": "Archivo de costos directos por zona y cultivo para mimargenagro.",
     "como_editar": "Modificá los valores numéricos de cada cultivo según la zona. No cambies los nombres de las claves (keys). Los costos están en USD/ha.",
-    "estructura": "zonas → cultivo → ítems de costo + precioRef + rindeRef",
+    "estructura": "precios_referencia + zonas → cultivo → ítems de costo + precioRef + rindeRef",
     "items_de_costo": {
       "semilla": "Semillas",
       "fertilizacion": "Fertilización (base + cobertura)",
@@ -14,7 +14,15 @@
     "nota_rinde_indiferencia": "El Rinde de Indiferencia excluye cosecha y flete largo, ya que son gastos de comercialización que se devengan al vender.",
     "ultima_actualizacion": "2025/26 — Campaña en curso"
   },
-  "zonas": {
+
+  "precios_referencia": {
+    "_nota": "Precios de referencia que aparecen en el encabezado de la app. Actualizar al inicio de cada campaña o cuando haya cambios significativos de mercado. USD/tn.",
+    "soja":    { "precio": 340, "posicion": "Mayo" },
+    "maiz":    { "precio": 185, "posicion": "Abril" },
+    "trigo":   { "precio": 220, "posicion": "Enero" },
+    "colza":   { "precio": 480, "posicion": "Marzo" },
+    "girasol": { "precio": 390, "posicion": "Marzo" }
+  },
     "nucleo": {
       "nombre": "Zona Núcleo",
       "descripcion": "Sur de Santa Fe / Norte de Buenos Aires",

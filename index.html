@@ -49,7 +49,8 @@ header{position:relative;z-index:10;background:linear-gradient(180deg,#090e18 0%
 .hprice{text-align:right;flex-shrink:0;}
 .hprice .crop{font-family:var(--mono);font-size:8px;color:var(--text-faint);letter-spacing:2px;}
 .hprice .val{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent);transition:color .4s;}
-@media(max-width:900px){.header-prices .hprice:nth-child(n+3){display:none;}}
+@media(max-width:1000px){.header-prices .hprice:nth-child(n+4){display:none;}}
+@media(max-width:750px){.header-prices .hprice:nth-child(n+3){display:none;}}
 @media(max-width:600px){.header-prices{display:none;}}
 .header-status{display:flex;align-items:center;gap:6px;padding:0 14px;font-family:var(--mono);font-size:9px;color:var(--muted);border-left:1px solid var(--border2);flex-shrink:0;}
 @media(max-width:700px){.header-status{display:none;}}
@@ -228,12 +229,8 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
     </div>
   </div>
   <div class="zona-pill"><div class="zona-pill-dot"></div><span id="zonaPillLabel">—</span></div>
-  <div class="header-prices">
-    <div class="hprice"><div class="crop">SOJA</div><div class="val">USD 340/tn</div></div>
-    <div class="hprice"><div class="crop">MAÍZ</div><div class="val">USD 185/tn</div></div>
-    <div class="hprice"><div class="crop">TRIGO</div><div class="val">USD 220/tn</div></div>
-  </div>
-  <div class="header-status"><div class="dot-live"></div>EN VIVO</div>
+  <div class="header-prices" id="headerPrecios"></div>
+  <div class="header-status"><div style="width:6px;height:6px;border-radius:50%;background:var(--text-dim);flex-shrink:0;"></div>PRECIOS REF.</div>
 </header>
 <main>
   <div id="loadState" class="load-state"><div class="load-spinner"></div>CARGANDO DATOS DE COSTOS...</div>
@@ -410,6 +407,17 @@ function inicializar(){
   document.getElementById('loadState').style.display='none';
   const c=document.getElementById('appContent');
   c.style.display='flex';
+
+  // Renderizar precios de referencia en el header desde JSON
+  const pRef=DATOS.precios_referencia;
+  if(pRef){
+    const nombres={soja:'SOJA',maiz:'MAÍZ',trigo:'TRIGO',colza:'COLZA',girasol:'GIRASOL'};
+    const hp=document.getElementById('headerPrecios');
+    hp.innerHTML=Object.entries(pRef)
+      .filter(([k])=>k!=='_nota')
+      .map(([k,v])=>`<div class="hprice"><div class="crop">${nombres[k]||k.toUpperCase()}</div><div class="val">USD ${v.precio}/tn</div></div>`)
+      .join('');
+  }
   const btns=document.getElementById('zonaBtns');
   btns.innerHTML='';
   for(const[key,zona] of Object.entries(DATOS.zonas)){
