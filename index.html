@@ -373,7 +373,7 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
         <div class="tline tline-amber"></div>
         <div class="costos-grid" id="costosGrid"></div>
         <p style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:14px;letter-spacing:1px;line-height:1.8;">
-          * Incluye semillas, fertilización, agroquímicos, labranza, cosecha y flete. No incluye arrendamiento ni estructura.<br>
+          * Incluye semillas, fertilización, agroquímicos, labranza, cosecha & flete corto (campo → planta) y flete largo (planta → puerto). No incluye arrendamiento ni gastos de estructura.<br>
           Datos cargados desde <code style="color:var(--text-dim)">costos.json</code> — editá ese archivo para actualizar los valores por zona y campaña.
         </p>
       </div>
@@ -393,7 +393,7 @@ const CROP_META={
   doble_cm:{nombre:'Colza / Maíz',   emoji:'🟤', doble:true, c1:'colza', c2:'maiz',  lbl1:'COLZA (INVIERNO)', lbl2:'MAÍZ (VERANO)',      jsonKey:'doble_cm'},
 };
 const CROP_COLOR={soja:'#5cb85c',maiz:'#f07820',trigo:'#c8a040',colza:'#d4c800',girasol:'#d4880a',doble_ts:'#8a6cc8',doble_cm:'#6688cc'};
-const NOM={semilla:'Semillas',fertilizacion:'Fertilización',agroquimicos:'Agroquímicos',labranza:'Labranza & Siembra',cosecha:'Cosecha & Flete',flete:'Flete adicional',total:'TOTAL'};
+const NOM={semilla:'Semillas',fertilizacion:'Fertilización',agroquimicos:'Agroquímicos',labranza:'Labranza & Siembra',cosecha:'Cosecha & Flete corto',flete:'Flete largo (planta → puerto)',total:'TOTAL'};
 
 async function cargarDatos(){
   try{
@@ -517,7 +517,7 @@ function calcular(){
   const alqUSD=getAlquilerUSD();
   const ren1=((mar1/cos1)*100).toFixed(1);
   const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null;
-  const pbe1=+(cos1/(r1/10)).toFixed(1);
+  const pbe1=+(cosSinComerc1/(r1/10)).toFixed(1);
   const cosSinComerc1=getCostosSinComerc(c1);
   const qqbe1=+(cosSinComerc1/p1*10).toFixed(1);
   let html='';
@@ -530,8 +530,8 @@ function calcular(){
       <div class="metric neu"><div class="mlbl">Costos directos</div><div class="mval neu">${fmt(cos1)}</div><div class="mnote">${DATOS.zonas[zonaActual].nombre}</div></div>
       <div class="metric ${k} highlight"><div class="mlbl">⬟ Margen — Campo propio</div><div class="mval ${k}">${fmt(mar1)}</div><div class="mnote">sin costo de alquiler</div></div>
       ${mar1Alq!==null?`<div class="metric ${ka} highlight-rent"><div class="mlbl">⬟ Margen — Campo alquilado</div><div class="mval rent">${fmt(mar1Alq)}</div><div class="mnote">alquiler: ${document.getElementById('alqQq').value} qq soja = ${fmt(alqUSD)}/ha</div></div>`:''}
-      <div class="metric ${k}"><div class="mlbl">Rentabilidad</div><div class="mval ${k}">${ren1}%</div><div class="mnote">sobre costos directos</div></div>
-      <div class="metric highlight-be"><div class="mlbl">◆ Precio de breakeven</div><div class="mval be">USD ${pbe1}</div><div class="mnote">precio mín. para cubrir costos</div></div>
+      <div class="metric ${k}"><div class="mlbl">Retorno s/ inversión</div><div class="mval ${k}">${ren1}%</div><div class="mnote">margen ÷ costos directos</div></div>
+      <div class="metric highlight-be"><div class="mlbl">◆ Precio de indiferencia</div><div class="mval be">USD ${pbe1}</div><div class="mnote">sin comerc. · a ${r1} qq/ha</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Rinde de indiferencia</div><div class="mval be">${qqbe1} qq</div><div class="mnote">sin comerc. · a USD ${p1}/tn</div></div>
       ${s1?`<div class="metric ${k}"><div class="mlbl">Margen total — ${s1} ha</div><div class="mval ${k}">${fmt(mar1*s1)}</div><div class="mnote">campo propio · estimado</div></div>`:''}
       ${s1&&mar1Alq!==null?`<div class="metric ${ka}"><div class="mlbl">Margen total alquilado — ${s1} ha</div><div class="mval rent">${fmt(mar1Alq*s1)}</div><div class="mnote">con alquiler · estimado</div></div>`:''}
@@ -560,7 +560,7 @@ function calcular(){
     }
 
     const ren2=((mar2/cos2)*100).toFixed(1);
-    const pbe2=+(cos2/(r2/10)).toFixed(1);
+    const pbe2=+(cosSinComerc2/(r2/10)).toFixed(1);
     const cosSinComerc2=getCostosSinComerc(c2);
     const qqbe2=+(cosSinComerc2/p2*10).toFixed(1);
     const diff=+(mar1-mar2).toFixed(1), k1=cc(mar1), k2=cc(mar2), kd=cc(diff);
@@ -570,12 +570,12 @@ function calcular(){
       <div class="metric ${k1} highlight"><div class="mlbl">${meta1.emoji} ${meta1.nombre} — Margen</div><div class="mval ${k1}">${fmt(mar1)}</div><div class="mnote">${meta1.doble?detalleDoble1:'Ingreso '+fmt(ing1)+' · Costo '+fmt(cos1)}</div></div>
       <div class="metric ${k2} highlight"><div class="mlbl">${meta2.emoji} ${meta2.nombre} — Margen</div><div class="mval ${k2}">${fmt(mar2)}</div><div class="mnote">${meta2.doble?detalleDoble2:'Ingreso '+fmt(ing2)+' · Costo '+fmt(cos2)}</div></div>
       <div class="metric ${kd}"><div class="mlbl">Diferencia A − B</div><div class="mval ${kd}">${diff>=0?'+':''}${fmt(diff)}</div><div class="mnote">${winner}${diff!==0?' es más rentable':''}</div></div>
-      <div class="metric highlight-be"><div class="mlbl">◆ Breakeven precio ${meta1.nombre}</div><div class="mval be">USD ${pbe1}</div><div class="mnote">precio mín. 1º cultivo</div></div>
-      <div class="metric highlight-be"><div class="mlbl">◆ Breakeven precio ${meta2.nombre}</div><div class="mval be">USD ${pbe2}</div><div class="mnote">precio mín. 1º cultivo</div></div>
+      <div class="metric highlight-be"><div class="mlbl">◆ Precio indiferencia ${meta1.nombre}</div><div class="mval be">USD ${pbe1}</div><div class="mnote">sin comerc. · a ${r1} qq/ha</div></div>
+      <div class="metric highlight-be"><div class="mlbl">◆ Precio indiferencia ${meta2.nombre}</div><div class="mval be">USD ${pbe2}</div><div class="mnote">sin comerc. · a ${r2} qq/ha</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Rinde indiferencia ${meta1.nombre}</div><div class="mval be">${qqbe1} qq</div><div class="mnote">sin comerc. · USD ${p1}/tn</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Rinde indiferencia ${meta2.nombre}</div><div class="mval be">${qqbe2} qq</div><div class="mnote">sin comerc. · USD ${p2}/tn</div></div>
-      <div class="metric ${k1}"><div class="mlbl">Rentab. ${meta1.nombre}</div><div class="mval ${k1}">${ren1}%</div><div class="mnote">sobre costos directos</div></div>
-      <div class="metric ${k2}"><div class="mlbl">Rentab. ${meta2.nombre}</div><div class="mval ${k2}">${ren2}%</div><div class="mnote">sobre costos directos</div></div>
+      <div class="metric ${k1}"><div class="mlbl">ROI ${meta1.nombre}</div><div class="mval ${k1}">${ren1}%</div><div class="mnote">margen ÷ costos directos</div></div>
+      <div class="metric ${k2}"><div class="mlbl">ROI ${meta2.nombre}</div><div class="mval ${k2}">${ren2}%</div><div class="mnote">margen ÷ costos directos</div></div>
     </div>`;
   }
 
@@ -667,7 +667,7 @@ function getRangos(c){return RANGOS[c]||{pMin:200,pMax:500,pStep:20,rMin:15,rMax
 
 function generarLinea(cultivo,rinde,pBase){
   const labels=[],data=[];
-  const pbe=getCostos(cultivo)/(rinde/10);
+  const pbe=getCostosSinComerc(cultivo)/(rinde/10);
   const{pMin,pMax,pStep}=getRangos(cultivo);
   for(let p=pMin;p<=pMax;p+=pStep){labels.push(p);data.push(+margen(cultivo,rinde,p).toFixed(1));}
   if(lineChart)lineChart.destroy();
@@ -688,7 +688,7 @@ function generarLinea(cultivo,rinde,pBase){
     const sz=7;c.fillStyle='#ffd84a';c.strokeStyle='#080d14';c.lineWidth=2;
     c.beginPath();c.moveTo(xp,yp-sz);c.lineTo(xp+sz,yp);c.lineTo(xp,yp+sz);c.lineTo(xp-sz,yp);c.closePath();c.fill();c.stroke();
     c.fillStyle='#ffd84a';c.font='600 10px IBM Plex Mono,monospace';c.textAlign='center';
-    c.fillText('BE: USD '+Math.round(pbe),xp,top+14);c.restore();
+    c.fillText('P.Ind: USD '+Math.round(pbe),xp,top+14);c.restore();
   }};
   lineChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Margen',data,borderColor:col,backgroundColor:grad,borderWidth:2.5,pointRadius:2,pointBackgroundColor:col,fill:true,tension:0.35}]},
     options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#101a28',borderColor:'#1c2e44',borderWidth:1,titleColor:'#5a7fa8',bodyColor:'#c8daf0',bodyFont:{family:'IBM Plex Mono',size:12},callbacks:{title:i=>`Precio: USD ${i[0].label}/tn`,label:c=>` Margen: USD ${c.parsed.y.toLocaleString('es-AR')}/ha`}}},
