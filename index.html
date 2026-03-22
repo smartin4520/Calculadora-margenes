@@ -517,8 +517,8 @@ function calcular(){
   const alqUSD=getAlquilerUSD();
   const ren1=((mar1/cos1)*100).toFixed(1);
   const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null;
-  const pbe1=+(cosSinComerc1/(r1/10)).toFixed(1);
   const cosSinComerc1=getCostosSinComerc(c1);
+  const pbe1=+(cosSinComerc1/(r1/10)).toFixed(1);
   const qqbe1=+(cosSinComerc1/p1*10).toFixed(1);
   let html='';
 
@@ -560,8 +560,8 @@ function calcular(){
     }
 
     const ren2=((mar2/cos2)*100).toFixed(1);
-    const pbe2=+(cosSinComerc2/(r2/10)).toFixed(1);
     const cosSinComerc2=getCostosSinComerc(c2);
+    const pbe2=+(cosSinComerc2/(r2/10)).toFixed(1);
     const qqbe2=+(cosSinComerc2/p2*10).toFixed(1);
     const diff=+(mar1-mar2).toFixed(1), k1=cc(mar1), k2=cc(mar2), kd=cc(diff);
     const winner=diff>0?meta1.nombre:diff<0?meta2.nombre:'Igual resultado';
