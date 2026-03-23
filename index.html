@@ -683,8 +683,8 @@ function calcular(){
   const ren1=((mar1Propio/(cos1+estUSD))*100).toFixed(1);
   const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null; // campo alquilado = margen - alquiler (sin estructura)
   const cosSinComerc1=getCostosSinComerc(c1);
-  const pbe1=+(cosSinComerc1/(r1/10)).toFixed(1);
-  const qqbe1=+(cosSinComerc1/p1*10).toFixed(1);
+  const pbe1=Math.round(cosSinComerc1/(r1/10));
+  const qqbe1=Math.round(cosSinComerc1/p1*10);
 
   // Para doble cultivo con alquiler: margen por componente
   let margenDobleDetalle = '';
@@ -743,8 +743,8 @@ function calcular(){
 
     const ren2=((mar2/cos2)*100).toFixed(1);
     const cosSinComerc2=getCostosSinComerc(c2);
-    const pbe2=+(cosSinComerc2/(r2/10)).toFixed(1);
-    const qqbe2=+(cosSinComerc2/p2*10).toFixed(1);
+    const pbe2=Math.round(cosSinComerc2/(r2/10));
+    const qqbe2=Math.round(cosSinComerc2/p2*10);
     const diff=+(mar1-mar2).toFixed(1), k1=cc(mar1), k2=cc(mar2), kd=cc(diff);
     const winner=diff>0?meta1.nombre:diff<0?meta2.nombre:'Igual resultado';
     document.getElementById('resTline').className='tline';
@@ -960,28 +960,33 @@ function renderCostos(cultivo){
   const d=getDetalle(cultivo);
   const estUSD=getEstructura();
   const alqUSD=getAlquilerUSD();
+  const totalBase=d.total; // total costos directos sin estructura ni alquiler
   let h='';
   for(const[k,v] of Object.entries(d)){
     const tot=k==='total';
-    h+=`<div class="costo-cell${tot?' total-row':''}"><div class="cname${tot?' total':''}">${NOM[k]||k}</div><div class="cval${tot?' total':''}">USD ${v.toLocaleString('es-AR')}</div></div>`;
+    const pct=(!tot&&totalBase>0)?` <span style="font-size:8px;color:var(--muted);font-weight:400;">${Math.round(v/totalBase*100)}%</span>`:'';
+    h+=`<div class="costo-cell${tot?' total-row':''}">
+      <div class="cname${tot?' total':''}">${NOM[k]||k}</div>
+      <div class="cval${tot?' total':''}">USD ${v.toLocaleString('es-AR')}${pct}</div>
+    </div>`;
   }
-  // Estructura — siempre visible, es parte del campo propio
+  // Estructura — siempre visible
   if(estUSD>0){
-    const totalPropio=d.total+estUSD;
+    const totalPropio=totalBase+estUSD;
     h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);">
       <div class="cname" style="color:#88ccff;">Estructura</div>
-      <div class="cval" style="color:#88ccff;">USD ${estUSD.toLocaleString('es-AR')} <span style="font-size:9px;color:var(--muted);font-weight:400;">${DATOS.zonas[zonaActual].nombre}</span></div>
+      <div class="cval" style="color:#88ccff;">USD ${estUSD.toLocaleString('es-AR')}</div>
     </div>
     <div class="costo-cell total-row">
       <div class="cname total">TOTAL CAMPO PROPIO</div>
       <div class="cval total">USD ${totalPropio.toLocaleString('es-AR',{maximumFractionDigits:0})}</div>
     </div>`;
   }
-  // Alquiler — solo si está activo, sin estructura
+  // Alquiler — solo si está activo
   if(alqUSD>0){
     const qq=document.getElementById('alqQq').value;
     const ps=document.getElementById('alqPrecioSoja').value;
-    const totalAlq=d.total+alqUSD;
+    const totalAlq=totalBase+alqUSD;
     h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);">
       <div class="cname" style="color:#c890ff;">Arrendamiento</div>
       <div class="cval" style="color:#c890ff;">USD ${alqUSD.toLocaleString('es-AR')} <span style="font-size:9px;color:var(--muted);font-weight:400;">(${qq} qq × $${ps})</span></div>
