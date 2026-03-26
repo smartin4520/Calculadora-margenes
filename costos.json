@@ -116,7 +116,149 @@
           "precioRef": 380
         }
       },
-      "estructura_usd_ha": 45
+      "estructura_usd_ha": 45,
+      "paquetes": {
+        "soja": {
+          "media": {
+            "descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base",
+            "rinde_min": 18,
+            "rinde_max": 35,
+            "rinde_ref": 28,
+            "delta_semilla": 0,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc",
+            "rinde_min": 32,
+            "rinde_max": 55,
+            "rinde_ref": 42,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 30,
+            "delta_agroquimicos": 15
+          }
+        },
+        "maiz": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea",
+            "rinde_min": 55,
+            "rinde_max": 85,
+            "rinde_ref": 70,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -30,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes",
+            "rinde_min": 80,
+            "rinde_max": 130,
+            "rinde_ref": 100,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 50,
+            "delta_agroquimicos": 15
+          }
+        },
+        "trigo": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NP base, un fungicida",
+            "rinde_min": 22,
+            "rinde_max": 42,
+            "rinde_ref": 32,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -25,
+            "delta_agroquimicos": -15
+          },
+          "alta": {
+            "descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas",
+            "rinde_min": 38,
+            "rinde_max": 65,
+            "rinde_ref": 50,
+            "delta_semilla": 10,
+            "delta_fertilizacion": 40,
+            "delta_agroquimicos": 25
+          }
+        },
+        "colza": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NPS base",
+            "rinde_min": 15,
+            "rinde_max": 26,
+            "rinde_ref": 21,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración",
+            "rinde_min": 24,
+            "rinde_max": 42,
+            "rinde_ref": 32,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 35,
+            "delta_agroquimicos": 20
+          }
+        },
+        "girasol": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida",
+            "rinde_min": 14,
+            "rinde_max": 26,
+            "rinde_ref": 20,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -15,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia",
+            "rinde_min": 22,
+            "rinde_max": 38,
+            "rinde_ref": 28,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 25,
+            "delta_agroquimicos": 20
+          }
+        },
+        "doble": {
+          "media": {
+            "descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos",
+            "rinde_min": 55,
+            "rinde_max": 88,
+            "rinde_ref": 70,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -40,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa",
+            "rinde_min": 82,
+            "rinde_max": 120,
+            "rinde_ref": 98,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 60,
+            "delta_agroquimicos": 25
+          }
+        },
+        "doble_cm": {
+          "media": {
+            "descripcion": "Colza estándar + maíz 2ª estándar",
+            "rinde_min": 55,
+            "rinde_max": 85,
+            "rinde_ref": 68,
+            "delta_semilla": -15,
+            "delta_fertilizacion": -50,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa",
+            "rinde_min": 80,
+            "rinde_max": 118,
+            "rinde_ref": 95,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 70,
+            "delta_agroquimicos": 25
+          }
+        }
+      }
     },
     "sur_cordoba": {
       "nombre": "Sur de Córdoba",
@@ -193,7 +335,149 @@
           "precioRef": 380
         }
       },
-      "estructura_usd_ha": 42
+      "estructura_usd_ha": 42,
+      "paquetes": {
+        "soja": {
+          "media": {
+            "descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base",
+            "rinde_min": 17,
+            "rinde_max": 33,
+            "rinde_ref": 27,
+            "delta_semilla": 0,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc",
+            "rinde_min": 30,
+            "rinde_max": 52,
+            "rinde_ref": 40,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 30,
+            "delta_agroquimicos": 15
+          }
+        },
+        "maiz": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea",
+            "rinde_min": 52,
+            "rinde_max": 81,
+            "rinde_ref": 66,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -30,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes",
+            "rinde_min": 76,
+            "rinde_max": 124,
+            "rinde_ref": 95,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 50,
+            "delta_agroquimicos": 15
+          }
+        },
+        "trigo": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NP base, un fungicida",
+            "rinde_min": 21,
+            "rinde_max": 40,
+            "rinde_ref": 30,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -25,
+            "delta_agroquimicos": -15
+          },
+          "alta": {
+            "descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas",
+            "rinde_min": 36,
+            "rinde_max": 62,
+            "rinde_ref": 48,
+            "delta_semilla": 10,
+            "delta_fertilizacion": 40,
+            "delta_agroquimicos": 25
+          }
+        },
+        "colza": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NPS base",
+            "rinde_min": 14,
+            "rinde_max": 25,
+            "rinde_ref": 20,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración",
+            "rinde_min": 23,
+            "rinde_max": 40,
+            "rinde_ref": 30,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 35,
+            "delta_agroquimicos": 20
+          }
+        },
+        "girasol": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida",
+            "rinde_min": 13,
+            "rinde_max": 25,
+            "rinde_ref": 19,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -15,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia",
+            "rinde_min": 21,
+            "rinde_max": 36,
+            "rinde_ref": 27,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 25,
+            "delta_agroquimicos": 20
+          }
+        },
+        "doble": {
+          "media": {
+            "descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos",
+            "rinde_min": 52,
+            "rinde_max": 84,
+            "rinde_ref": 66,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -40,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa",
+            "rinde_min": 78,
+            "rinde_max": 114,
+            "rinde_ref": 93,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 60,
+            "delta_agroquimicos": 25
+          }
+        },
+        "doble_cm": {
+          "media": {
+            "descripcion": "Colza estándar + maíz 2ª estándar",
+            "rinde_min": 52,
+            "rinde_max": 81,
+            "rinde_ref": 65,
+            "delta_semilla": -15,
+            "delta_fertilizacion": -50,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa",
+            "rinde_min": 76,
+            "rinde_max": 112,
+            "rinde_ref": 90,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 70,
+            "delta_agroquimicos": 25
+          }
+        }
+      }
     },
     "sudeste_bsas": {
       "nombre": "Sudeste Bonaerense",
@@ -270,7 +554,149 @@
           "precioRef": 380
         }
       },
-      "estructura_usd_ha": 38
+      "estructura_usd_ha": 38,
+      "paquetes": {
+        "soja": {
+          "media": {
+            "descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base",
+            "rinde_min": 16,
+            "rinde_max": 31,
+            "rinde_ref": 25,
+            "delta_semilla": 0,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc",
+            "rinde_min": 28,
+            "rinde_max": 48,
+            "rinde_ref": 37,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 30,
+            "delta_agroquimicos": 15
+          }
+        },
+        "maiz": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea",
+            "rinde_min": 48,
+            "rinde_max": 75,
+            "rinde_ref": 62,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -30,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes",
+            "rinde_min": 70,
+            "rinde_max": 114,
+            "rinde_ref": 88,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 50,
+            "delta_agroquimicos": 15
+          }
+        },
+        "trigo": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NP base, un fungicida",
+            "rinde_min": 19,
+            "rinde_max": 37,
+            "rinde_ref": 28,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -25,
+            "delta_agroquimicos": -15
+          },
+          "alta": {
+            "descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas",
+            "rinde_min": 33,
+            "rinde_max": 57,
+            "rinde_ref": 44,
+            "delta_semilla": 10,
+            "delta_fertilizacion": 40,
+            "delta_agroquimicos": 25
+          }
+        },
+        "colza": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NPS base",
+            "rinde_min": 13,
+            "rinde_max": 23,
+            "rinde_ref": 18,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración",
+            "rinde_min": 21,
+            "rinde_max": 37,
+            "rinde_ref": 28,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 35,
+            "delta_agroquimicos": 20
+          }
+        },
+        "girasol": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida",
+            "rinde_min": 12,
+            "rinde_max": 23,
+            "rinde_ref": 18,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -15,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia",
+            "rinde_min": 19,
+            "rinde_max": 33,
+            "rinde_ref": 25,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 25,
+            "delta_agroquimicos": 20
+          }
+        },
+        "doble": {
+          "media": {
+            "descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos",
+            "rinde_min": 48,
+            "rinde_max": 77,
+            "rinde_ref": 62,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -40,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa",
+            "rinde_min": 72,
+            "rinde_max": 106,
+            "rinde_ref": 86,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 60,
+            "delta_agroquimicos": 25
+          }
+        },
+        "doble_cm": {
+          "media": {
+            "descripcion": "Colza estándar + maíz 2ª estándar",
+            "rinde_min": 48,
+            "rinde_max": 75,
+            "rinde_ref": 60,
+            "delta_semilla": -15,
+            "delta_fertilizacion": -50,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa",
+            "rinde_min": 70,
+            "rinde_max": 104,
+            "rinde_ref": 84,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 70,
+            "delta_agroquimicos": 25
+          }
+        }
+      }
     },
     "oeste_lapampa": {
       "nombre": "Oeste Bonaerense / La Pampa",
@@ -347,7 +773,149 @@
           "precioRef": 380
         }
       },
-      "estructura_usd_ha": 35
+      "estructura_usd_ha": 35,
+      "paquetes": {
+        "soja": {
+          "media": {
+            "descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base",
+            "rinde_min": 14,
+            "rinde_max": 28,
+            "rinde_ref": 22,
+            "delta_semilla": 0,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc",
+            "rinde_min": 26,
+            "rinde_max": 44,
+            "rinde_ref": 34,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 30,
+            "delta_agroquimicos": 15
+          }
+        },
+        "maiz": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea",
+            "rinde_min": 44,
+            "rinde_max": 68,
+            "rinde_ref": 56,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -30,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes",
+            "rinde_min": 64,
+            "rinde_max": 104,
+            "rinde_ref": 80,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 50,
+            "delta_agroquimicos": 15
+          }
+        },
+        "trigo": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NP base, un fungicida",
+            "rinde_min": 18,
+            "rinde_max": 34,
+            "rinde_ref": 26,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -25,
+            "delta_agroquimicos": -15
+          },
+          "alta": {
+            "descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas",
+            "rinde_min": 30,
+            "rinde_max": 52,
+            "rinde_ref": 40,
+            "delta_semilla": 10,
+            "delta_fertilizacion": 40,
+            "delta_agroquimicos": 25
+          }
+        },
+        "colza": {
+          "media": {
+            "descripcion": "Variedad estándar, fertilización NPS base",
+            "rinde_min": 12,
+            "rinde_max": 21,
+            "rinde_ref": 17,
+            "delta_semilla": -5,
+            "delta_fertilizacion": -20,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración",
+            "rinde_min": 19,
+            "rinde_max": 34,
+            "rinde_ref": 26,
+            "delta_semilla": 15,
+            "delta_fertilizacion": 35,
+            "delta_agroquimicos": 20
+          }
+        },
+        "girasol": {
+          "media": {
+            "descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida",
+            "rinde_min": 11,
+            "rinde_max": 21,
+            "rinde_ref": 16,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -15,
+            "delta_agroquimicos": -10
+          },
+          "alta": {
+            "descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia",
+            "rinde_min": 18,
+            "rinde_max": 30,
+            "rinde_ref": 22,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 25,
+            "delta_agroquimicos": 20
+          }
+        },
+        "doble": {
+          "media": {
+            "descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos",
+            "rinde_min": 44,
+            "rinde_max": 70,
+            "rinde_ref": 56,
+            "delta_semilla": -10,
+            "delta_fertilizacion": -40,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa",
+            "rinde_min": 66,
+            "rinde_max": 96,
+            "rinde_ref": 78,
+            "delta_semilla": 20,
+            "delta_fertilizacion": 60,
+            "delta_agroquimicos": 25
+          }
+        },
+        "doble_cm": {
+          "media": {
+            "descripcion": "Colza estándar + maíz 2ª estándar",
+            "rinde_min": 44,
+            "rinde_max": 68,
+            "rinde_ref": 54,
+            "delta_semilla": -15,
+            "delta_fertilizacion": -50,
+            "delta_agroquimicos": -20
+          },
+          "alta": {
+            "descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa",
+            "rinde_min": 64,
+            "rinde_max": 94,
+            "rinde_ref": 76,
+            "delta_semilla": 25,
+            "delta_fertilizacion": 70,
+            "delta_agroquimicos": 25
+          }
+        }
+      }
     }
   }
 }
