@@ -210,6 +210,34 @@ button{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:
 @keyframes spin{to{transform:rotate(360deg)}}
 footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font-family:var(--mono);font-size:8px;color:var(--text-faint);letter-spacing:1px;border-top:1px solid var(--border);}
 
+/* ── PAQUETE TECNOLÓGICO ── */
+.paquete-row{display:flex;gap:8px;margin-bottom:14px;}
+.paquete-btn{
+  flex:1;padding:10px 8px;border-radius:3px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface);
+  font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:1px;text-transform:uppercase;
+  color:var(--text-dim);transition:all .15s;text-align:center;
+  -webkit-tap-highlight-color:transparent;
+}
+.paquete-btn:hover{border-color:var(--text-dim);color:var(--text);}
+.paquete-btn.active-media{background:rgba(200,160,64,.12);border-color:#c8a040;color:#c8a040;}
+.paquete-btn.active-alta{background:rgba(var(--accent-rgb),.12);border-color:var(--accent);color:var(--accent);}
+.paquete-desc{
+  font-family:var(--mono);font-size:8px;color:var(--muted);
+  letter-spacing:.5px;line-height:1.6;
+  padding:8px 12px;background:var(--surface);
+  border-radius:3px;border:1px solid var(--border);
+  margin-bottom:12px;min-height:28px;
+}
+.rinde-warning{
+  display:none;font-family:var(--mono);font-size:9px;
+  color:var(--red);letter-spacing:.5px;
+  padding:6px 10px;background:rgba(214,78,58,.08);
+  border:1px solid rgba(214,78,58,.3);border-radius:3px;margin-top:4px;
+}
+.rinde-warning.show{display:block;}
+
 /* ── EXPORT BUTTONS ── */
 .export-row{
   display:flex;gap:10px;flex-wrap:wrap;
@@ -349,7 +377,24 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
                     <option value="doble_cm">🟤 Doble cultivo — Colza / Maíz</option>
                   </select>
                 </div>
-                <div class="fgroup"><label>Rendimiento (qq/ha)</label><input type="number" id="rinde1" placeholder="—" min="0" step="0.5" inputmode="decimal"></div>
+                <!-- Paquete tecnológico -->
+                <div class="fgroup span2">
+                  <label>Paquete tecnológico</label>
+                  <div class="paquete-row">
+                    <button class="paquete-btn active-media" id="paqMedia1" onclick="setPaquete(1,'media')">
+                      📦 Media
+                    </button>
+                    <button class="paquete-btn" id="paqAlta1" onclick="setPaquete(1,'alta')">
+                      🚀 Alta
+                    </button>
+                  </div>
+                  <div class="paquete-desc" id="paqDesc1">—</div>
+                </div>
+                <div class="fgroup">
+                  <label>Rendimiento (qq/ha)</label>
+                  <input type="number" id="rinde1" placeholder="—" min="0" step="0.5" inputmode="decimal" oninput="validarRinde(1)">
+                  <div class="rinde-warning" id="rindeWarn1"></div>
+                </div>
                 <div class="fgroup"><label>Precio (USD/tn)</label><input type="number" id="precio1" placeholder="—" min="0" step="5" inputmode="decimal"></div>
                 <!-- Panel doble cultivo — visible solo cuando corresponde -->
                 <div id="doblePanel1" style="display:none;grid-column:1/-1;">
@@ -545,7 +590,7 @@ const NOM={semilla:'Semillas',fertilizacion:'Fertilización',agroquimicos:'Agroq
 
 function cargarDatos(){
   // Datos incrustados directamente — no requiere archivo externo
-  DATOS = {"_instrucciones": {"descripcion": "Archivo de costos directos por zona y cultivo para mimargenagro.", "como_editar": "Modificá los valores numéricos de cada cultivo según la zona. No cambies los nombres de las claves (keys). Los costos están en USD/ha.", "estructura": "precios_referencia + zonas → cultivo → ítems de costo + precioRef + rindeRef", "items_de_costo": {"semilla": "Semillas", "fertilizacion": "Fertilización (base + cobertura)", "agroquimicos": "Herbicidas, fungicidas, insecticidas", "labranza": "Labranza y siembra", "cosecha": "Cosecha + flete corto (campo → planta/acopio más cercano)", "flete": "Flete largo (planta/acopio → puerto o destino final)"}, "nota_rinde_indiferencia": "El Rinde de Indiferencia excluye cosecha y flete largo, ya que son gastos de comercialización que se devengan al vender.", "ultima_actualizacion": "2025/26 — Campaña en curso", "items_adicionales": {"estructura_usd_ha": "Costo de estructura del campo propio (administración, seguros, impuestos, mantenimiento) en USD/ha. Se muestra como costo adicional separado de los costos directos de producción."}}, "precios_referencia": {"_nota": "Precios de referencia que aparecen en el encabezado de la app. Actualizar al inicio de cada campaña o cuando haya cambios significativos de mercado. USD/tn.", "soja": {"precio": 340, "posicion": "Mayo"}, "maiz": {"precio": 185, "posicion": "Abril"}, "trigo": {"precio": 220, "posicion": "Enero"}, "colza": {"precio": 480, "posicion": "Marzo"}, "girasol": {"precio": 390, "posicion": "Marzo"}}, "zonas": {"nucleo": {"nombre": "Zona Núcleo", "descripcion": "Sur de Santa Fe / Norte de Buenos Aires", "cultivos": {"soja": {"semilla": 90, "fertilizacion": 120, "agroquimicos": 125, "labranza": 80, "cosecha": 130, "flete": 40, "rindeRef": 38, "precioRef": 340}, "maiz": {"semilla": 165, "fertilizacion": 220, "agroquimicos": 105, "labranza": 80, "cosecha": 240, "flete": 45, "rindeRef": 95, "precioRef": 185}, "trigo": {"semilla": 72, "fertilizacion": 170, "agroquimicos": 95, "labranza": 80, "cosecha": 210, "flete": 40, "rindeRef": 48, "precioRef": 220}, "colza": {"semilla": 82, "fertilizacion": 155, "agroquimicos": 115, "labranza": 80, "cosecha": 265, "flete": 40, "rindeRef": 30, "precioRef": 460}, "girasol": {"semilla": 105, "fertilizacion": 105, "agroquimicos": 95, "labranza": 80, "cosecha": 215, "flete": 40, "rindeRef": 28, "precioRef": 390}, "doble": {"semilla": 165, "fertilizacion": 320, "agroquimicos": 215, "labranza": 130, "cosecha": 250, "flete": 70, "rindeRef": 95, "precioRef": 270}, "doble_cm": {"semilla": 245, "fertilizacion": 370, "agroquimicos": 215, "labranza": 130, "cosecha": 490, "flete": 80, "rindeRef": 28, "precioRef": 380}}, "estructura_usd_ha": 45}, "sur_cordoba": {"nombre": "Sur de Córdoba", "descripcion": "Centro-sur de Córdoba", "cultivos": {"soja": {"semilla": 88, "fertilizacion": 115, "agroquimicos": 120, "labranza": 78, "cosecha": 128, "flete": 45, "rindeRef": 35, "precioRef": 340}, "maiz": {"semilla": 162, "fertilizacion": 210, "agroquimicos": 100, "labranza": 78, "cosecha": 235, "flete": 50, "rindeRef": 90, "precioRef": 185}, "trigo": {"semilla": 70, "fertilizacion": 162, "agroquimicos": 90, "labranza": 78, "cosecha": 205, "flete": 45, "rindeRef": 44, "precioRef": 220}, "colza": {"semilla": 80, "fertilizacion": 148, "agroquimicos": 110, "labranza": 78, "cosecha": 258, "flete": 45, "rindeRef": 27, "precioRef": 460}, "girasol": {"semilla": 102, "fertilizacion": 100, "agroquimicos": 90, "labranza": 78, "cosecha": 210, "flete": 45, "rindeRef": 26, "precioRef": 390}, "doble": {"semilla": 162, "fertilizacion": 308, "agroquimicos": 210, "labranza": 128, "cosecha": 242, "flete": 75, "rindeRef": 88, "precioRef": 270}, "doble_cm": {"semilla": 242, "fertilizacion": 358, "agroquimicos": 210, "labranza": 128, "cosecha": 478, "flete": 85, "rindeRef": 26, "precioRef": 380}}, "estructura_usd_ha": 42}, "sudeste_bsas": {"nombre": "Sudeste Bonaerense", "descripcion": "Buenos Aires sudeste (cuenca del Salado y sur)", "cultivos": {"soja": {"semilla": 85, "fertilizacion": 108, "agroquimicos": 115, "labranza": 82, "cosecha": 125, "flete": 55, "rindeRef": 30, "precioRef": 340}, "maiz": {"semilla": 158, "fertilizacion": 195, "agroquimicos": 98, "labranza": 82, "cosecha": 228, "flete": 58, "rindeRef": 80, "precioRef": 185}, "trigo": {"semilla": 68, "fertilizacion": 155, "agroquimicos": 88, "labranza": 82, "cosecha": 198, "flete": 55, "rindeRef": 40, "precioRef": 220}, "colza": {"semilla": 78, "fertilizacion": 142, "agroquimicos": 108, "labranza": 82, "cosecha": 252, "flete": 55, "rindeRef": 24, "precioRef": 460}, "girasol": {"semilla": 98, "fertilizacion": 95, "agroquimicos": 88, "labranza": 82, "cosecha": 205, "flete": 55, "rindeRef": 22, "precioRef": 390}, "doble": {"semilla": 158, "fertilizacion": 295, "agroquimicos": 205, "labranza": 128, "cosecha": 235, "flete": 88, "rindeRef": 80, "precioRef": 270}, "doble_cm": {"semilla": 236, "fertilizacion": 342, "agroquimicos": 205, "labranza": 128, "cosecha": 462, "flete": 95, "rindeRef": 23, "precioRef": 380}}, "estructura_usd_ha": 38}, "oeste_lapampa": {"nombre": "Oeste Bonaerense / La Pampa", "descripcion": "Oeste de Buenos Aires y La Pampa", "cultivos": {"soja": {"semilla": 82, "fertilizacion": 100, "agroquimicos": 110, "labranza": 80, "cosecha": 120, "flete": 65, "rindeRef": 26, "precioRef": 340}, "maiz": {"semilla": 155, "fertilizacion": 185, "agroquimicos": 95, "labranza": 80, "cosecha": 220, "flete": 68, "rindeRef": 72, "precioRef": 185}, "trigo": {"semilla": 65, "fertilizacion": 148, "agroquimicos": 85, "labranza": 80, "cosecha": 190, "flete": 65, "rindeRef": 36, "precioRef": 220}, "colza": {"semilla": 75, "fertilizacion": 135, "agroquimicos": 105, "labranza": 80, "cosecha": 245, "flete": 65, "rindeRef": 22, "precioRef": 460}, "girasol": {"semilla": 95, "fertilizacion": 90, "agroquimicos": 85, "labranza": 80, "cosecha": 198, "flete": 65, "rindeRef": 20, "precioRef": 390}, "doble": {"semilla": 155, "fertilizacion": 282, "agroquimicos": 198, "labranza": 125, "cosecha": 228, "flete": 98, "rindeRef": 75, "precioRef": 270}, "doble_cm": {"semilla": 228, "fertilizacion": 318, "agroquimicos": 198, "labranza": 125, "cosecha": 445, "flete": 108, "rindeRef": 20, "precioRef": 380}}, "estructura_usd_ha": 35}}};
+  DATOS = {"_instrucciones": {"descripcion": "Archivo de costos directos por zona y cultivo para mimargenagro.", "como_editar": "Modificá los valores numéricos de cada cultivo según la zona. No cambies los nombres de las claves (keys). Los costos están en USD/ha.", "estructura": "precios_referencia + zonas → cultivo → ítems de costo + precioRef + rindeRef", "items_de_costo": {"semilla": "Semillas", "fertilizacion": "Fertilización (base + cobertura)", "agroquimicos": "Herbicidas, fungicidas, insecticidas", "labranza": "Labranza y siembra", "cosecha": "Cosecha + flete corto (campo → planta/acopio más cercano)", "flete": "Flete largo (planta/acopio → puerto o destino final)"}, "nota_rinde_indiferencia": "El Rinde de Indiferencia excluye cosecha y flete largo, ya que son gastos de comercialización que se devengan al vender.", "ultima_actualizacion": "2025/26 — Campaña en curso", "items_adicionales": {"estructura_usd_ha": "Costo de estructura del campo propio (administración, seguros, impuestos, mantenimiento) en USD/ha. Se muestra como costo adicional separado de los costos directos de producción."}}, "precios_referencia": {"_nota": "Precios de referencia que aparecen en el encabezado de la app. Actualizar al inicio de cada campaña o cuando haya cambios significativos de mercado. USD/tn.", "soja": {"precio": 340, "posicion": "Mayo"}, "maiz": {"precio": 185, "posicion": "Abril"}, "trigo": {"precio": 220, "posicion": "Enero"}, "colza": {"precio": 480, "posicion": "Marzo"}, "girasol": {"precio": 390, "posicion": "Marzo"}}, "zonas": {"nucleo": {"nombre": "Zona Núcleo", "descripcion": "Sur de Santa Fe / Norte de Buenos Aires", "cultivos": {"soja": {"semilla": 90, "fertilizacion": 120, "agroquimicos": 125, "labranza": 80, "cosecha": 130, "flete": 40, "rindeRef": 38, "precioRef": 340}, "maiz": {"semilla": 165, "fertilizacion": 220, "agroquimicos": 105, "labranza": 80, "cosecha": 240, "flete": 45, "rindeRef": 95, "precioRef": 185}, "trigo": {"semilla": 72, "fertilizacion": 170, "agroquimicos": 95, "labranza": 80, "cosecha": 210, "flete": 40, "rindeRef": 48, "precioRef": 220}, "colza": {"semilla": 82, "fertilizacion": 155, "agroquimicos": 115, "labranza": 80, "cosecha": 265, "flete": 40, "rindeRef": 30, "precioRef": 460}, "girasol": {"semilla": 105, "fertilizacion": 105, "agroquimicos": 95, "labranza": 80, "cosecha": 215, "flete": 40, "rindeRef": 28, "precioRef": 390}, "doble": {"semilla": 165, "fertilizacion": 320, "agroquimicos": 215, "labranza": 130, "cosecha": 250, "flete": 70, "rindeRef": 95, "precioRef": 270}, "doble_cm": {"semilla": 245, "fertilizacion": 370, "agroquimicos": 215, "labranza": 130, "cosecha": 490, "flete": 80, "rindeRef": 28, "precioRef": 380}}, "estructura_usd_ha": 45, "paquetes": {"soja": {"media": {"descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base", "rinde_min": 18, "rinde_max": 35, "rinde_ref": 28, "delta_semilla": 0, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc", "rinde_min": 32, "rinde_max": 55, "rinde_ref": 42, "delta_semilla": 15, "delta_fertilizacion": 30, "delta_agroquimicos": 15}}, "maiz": {"media": {"descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea", "rinde_min": 55, "rinde_max": 85, "rinde_ref": 70, "delta_semilla": -10, "delta_fertilizacion": -30, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes", "rinde_min": 80, "rinde_max": 130, "rinde_ref": 100, "delta_semilla": 25, "delta_fertilizacion": 50, "delta_agroquimicos": 15}}, "trigo": {"media": {"descripcion": "Variedad estándar, fertilización NP base, un fungicida", "rinde_min": 22, "rinde_max": 42, "rinde_ref": 32, "delta_semilla": -5, "delta_fertilizacion": -25, "delta_agroquimicos": -15}, "alta": {"descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas", "rinde_min": 38, "rinde_max": 65, "rinde_ref": 50, "delta_semilla": 10, "delta_fertilizacion": 40, "delta_agroquimicos": 25}}, "colza": {"media": {"descripcion": "Variedad estándar, fertilización NPS base", "rinde_min": 15, "rinde_max": 26, "rinde_ref": 21, "delta_semilla": -5, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración", "rinde_min": 24, "rinde_max": 42, "rinde_ref": 32, "delta_semilla": 15, "delta_fertilizacion": 35, "delta_agroquimicos": 20}}, "girasol": {"media": {"descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida", "rinde_min": 14, "rinde_max": 26, "rinde_ref": 20, "delta_semilla": -10, "delta_fertilizacion": -15, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia", "rinde_min": 22, "rinde_max": 38, "rinde_ref": 28, "delta_semilla": 20, "delta_fertilizacion": 25, "delta_agroquimicos": 20}}, "doble": {"media": {"descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos", "rinde_min": 55, "rinde_max": 88, "rinde_ref": 70, "delta_semilla": -10, "delta_fertilizacion": -40, "delta_agroquimicos": -20}, "alta": {"descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa", "rinde_min": 82, "rinde_max": 120, "rinde_ref": 98, "delta_semilla": 20, "delta_fertilizacion": 60, "delta_agroquimicos": 25}}, "doble_cm": {"media": {"descripcion": "Colza estándar + maíz 2ª estándar", "rinde_min": 55, "rinde_max": 85, "rinde_ref": 68, "delta_semilla": -15, "delta_fertilizacion": -50, "delta_agroquimicos": -20}, "alta": {"descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa", "rinde_min": 80, "rinde_max": 118, "rinde_ref": 95, "delta_semilla": 25, "delta_fertilizacion": 70, "delta_agroquimicos": 25}}}}, "sur_cordoba": {"nombre": "Sur de Córdoba", "descripcion": "Centro-sur de Córdoba", "cultivos": {"soja": {"semilla": 88, "fertilizacion": 115, "agroquimicos": 120, "labranza": 78, "cosecha": 128, "flete": 45, "rindeRef": 35, "precioRef": 340}, "maiz": {"semilla": 162, "fertilizacion": 210, "agroquimicos": 100, "labranza": 78, "cosecha": 235, "flete": 50, "rindeRef": 90, "precioRef": 185}, "trigo": {"semilla": 70, "fertilizacion": 162, "agroquimicos": 90, "labranza": 78, "cosecha": 205, "flete": 45, "rindeRef": 44, "precioRef": 220}, "colza": {"semilla": 80, "fertilizacion": 148, "agroquimicos": 110, "labranza": 78, "cosecha": 258, "flete": 45, "rindeRef": 27, "precioRef": 460}, "girasol": {"semilla": 102, "fertilizacion": 100, "agroquimicos": 90, "labranza": 78, "cosecha": 210, "flete": 45, "rindeRef": 26, "precioRef": 390}, "doble": {"semilla": 162, "fertilizacion": 308, "agroquimicos": 210, "labranza": 128, "cosecha": 242, "flete": 75, "rindeRef": 88, "precioRef": 270}, "doble_cm": {"semilla": 242, "fertilizacion": 358, "agroquimicos": 210, "labranza": 128, "cosecha": 478, "flete": 85, "rindeRef": 26, "precioRef": 380}}, "estructura_usd_ha": 42, "paquetes": {"soja": {"media": {"descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base", "rinde_min": 17, "rinde_max": 33, "rinde_ref": 27, "delta_semilla": 0, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc", "rinde_min": 30, "rinde_max": 52, "rinde_ref": 40, "delta_semilla": 15, "delta_fertilizacion": 30, "delta_agroquimicos": 15}}, "maiz": {"media": {"descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea", "rinde_min": 52, "rinde_max": 81, "rinde_ref": 66, "delta_semilla": -10, "delta_fertilizacion": -30, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes", "rinde_min": 76, "rinde_max": 124, "rinde_ref": 95, "delta_semilla": 25, "delta_fertilizacion": 50, "delta_agroquimicos": 15}}, "trigo": {"media": {"descripcion": "Variedad estándar, fertilización NP base, un fungicida", "rinde_min": 21, "rinde_max": 40, "rinde_ref": 30, "delta_semilla": -5, "delta_fertilizacion": -25, "delta_agroquimicos": -15}, "alta": {"descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas", "rinde_min": 36, "rinde_max": 62, "rinde_ref": 48, "delta_semilla": 10, "delta_fertilizacion": 40, "delta_agroquimicos": 25}}, "colza": {"media": {"descripcion": "Variedad estándar, fertilización NPS base", "rinde_min": 14, "rinde_max": 25, "rinde_ref": 20, "delta_semilla": -5, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración", "rinde_min": 23, "rinde_max": 40, "rinde_ref": 30, "delta_semilla": 15, "delta_fertilizacion": 35, "delta_agroquimicos": 20}}, "girasol": {"media": {"descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida", "rinde_min": 13, "rinde_max": 25, "rinde_ref": 19, "delta_semilla": -10, "delta_fertilizacion": -15, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia", "rinde_min": 21, "rinde_max": 36, "rinde_ref": 27, "delta_semilla": 20, "delta_fertilizacion": 25, "delta_agroquimicos": 20}}, "doble": {"media": {"descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos", "rinde_min": 52, "rinde_max": 84, "rinde_ref": 66, "delta_semilla": -10, "delta_fertilizacion": -40, "delta_agroquimicos": -20}, "alta": {"descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa", "rinde_min": 78, "rinde_max": 114, "rinde_ref": 93, "delta_semilla": 20, "delta_fertilizacion": 60, "delta_agroquimicos": 25}}, "doble_cm": {"media": {"descripcion": "Colza estándar + maíz 2ª estándar", "rinde_min": 52, "rinde_max": 81, "rinde_ref": 65, "delta_semilla": -15, "delta_fertilizacion": -50, "delta_agroquimicos": -20}, "alta": {"descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa", "rinde_min": 76, "rinde_max": 112, "rinde_ref": 90, "delta_semilla": 25, "delta_fertilizacion": 70, "delta_agroquimicos": 25}}}}, "sudeste_bsas": {"nombre": "Sudeste Bonaerense", "descripcion": "Buenos Aires sudeste (cuenca del Salado y sur)", "cultivos": {"soja": {"semilla": 85, "fertilizacion": 108, "agroquimicos": 115, "labranza": 82, "cosecha": 125, "flete": 55, "rindeRef": 30, "precioRef": 340}, "maiz": {"semilla": 158, "fertilizacion": 195, "agroquimicos": 98, "labranza": 82, "cosecha": 228, "flete": 58, "rindeRef": 80, "precioRef": 185}, "trigo": {"semilla": 68, "fertilizacion": 155, "agroquimicos": 88, "labranza": 82, "cosecha": 198, "flete": 55, "rindeRef": 40, "precioRef": 220}, "colza": {"semilla": 78, "fertilizacion": 142, "agroquimicos": 108, "labranza": 82, "cosecha": 252, "flete": 55, "rindeRef": 24, "precioRef": 460}, "girasol": {"semilla": 98, "fertilizacion": 95, "agroquimicos": 88, "labranza": 82, "cosecha": 205, "flete": 55, "rindeRef": 22, "precioRef": 390}, "doble": {"semilla": 158, "fertilizacion": 295, "agroquimicos": 205, "labranza": 128, "cosecha": 235, "flete": 88, "rindeRef": 80, "precioRef": 270}, "doble_cm": {"semilla": 236, "fertilizacion": 342, "agroquimicos": 205, "labranza": 128, "cosecha": 462, "flete": 95, "rindeRef": 23, "precioRef": 380}}, "estructura_usd_ha": 38, "paquetes": {"soja": {"media": {"descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base", "rinde_min": 16, "rinde_max": 31, "rinde_ref": 25, "delta_semilla": 0, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc", "rinde_min": 28, "rinde_max": 48, "rinde_ref": 37, "delta_semilla": 15, "delta_fertilizacion": 30, "delta_agroquimicos": 15}}, "maiz": {"media": {"descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea", "rinde_min": 48, "rinde_max": 75, "rinde_ref": 62, "delta_semilla": -10, "delta_fertilizacion": -30, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes", "rinde_min": 70, "rinde_max": 114, "rinde_ref": 88, "delta_semilla": 25, "delta_fertilizacion": 50, "delta_agroquimicos": 15}}, "trigo": {"media": {"descripcion": "Variedad estándar, fertilización NP base, un fungicida", "rinde_min": 19, "rinde_max": 37, "rinde_ref": 28, "delta_semilla": -5, "delta_fertilizacion": -25, "delta_agroquimicos": -15}, "alta": {"descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas", "rinde_min": 33, "rinde_max": 57, "rinde_ref": 44, "delta_semilla": 10, "delta_fertilizacion": 40, "delta_agroquimicos": 25}}, "colza": {"media": {"descripcion": "Variedad estándar, fertilización NPS base", "rinde_min": 13, "rinde_max": 23, "rinde_ref": 18, "delta_semilla": -5, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración", "rinde_min": 21, "rinde_max": 37, "rinde_ref": 28, "delta_semilla": 15, "delta_fertilizacion": 35, "delta_agroquimicos": 20}}, "girasol": {"media": {"descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida", "rinde_min": 12, "rinde_max": 23, "rinde_ref": 18, "delta_semilla": -10, "delta_fertilizacion": -15, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia", "rinde_min": 19, "rinde_max": 33, "rinde_ref": 25, "delta_semilla": 20, "delta_fertilizacion": 25, "delta_agroquimicos": 20}}, "doble": {"media": {"descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos", "rinde_min": 48, "rinde_max": 77, "rinde_ref": 62, "delta_semilla": -10, "delta_fertilizacion": -40, "delta_agroquimicos": -20}, "alta": {"descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa", "rinde_min": 72, "rinde_max": 106, "rinde_ref": 86, "delta_semilla": 20, "delta_fertilizacion": 60, "delta_agroquimicos": 25}}, "doble_cm": {"media": {"descripcion": "Colza estándar + maíz 2ª estándar", "rinde_min": 48, "rinde_max": 75, "rinde_ref": 60, "delta_semilla": -15, "delta_fertilizacion": -50, "delta_agroquimicos": -20}, "alta": {"descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa", "rinde_min": 70, "rinde_max": 104, "rinde_ref": 84, "delta_semilla": 25, "delta_fertilizacion": 70, "delta_agroquimicos": 25}}}}, "oeste_lapampa": {"nombre": "Oeste Bonaerense / La Pampa", "descripcion": "Oeste de Buenos Aires y La Pampa", "cultivos": {"soja": {"semilla": 82, "fertilizacion": 100, "agroquimicos": 110, "labranza": 80, "cosecha": 120, "flete": 65, "rindeRef": 26, "precioRef": 340}, "maiz": {"semilla": 155, "fertilizacion": 185, "agroquimicos": 95, "labranza": 80, "cosecha": 220, "flete": 68, "rindeRef": 72, "precioRef": 185}, "trigo": {"semilla": 65, "fertilizacion": 148, "agroquimicos": 85, "labranza": 80, "cosecha": 190, "flete": 65, "rindeRef": 36, "precioRef": 220}, "colza": {"semilla": 75, "fertilizacion": 135, "agroquimicos": 105, "labranza": 80, "cosecha": 245, "flete": 65, "rindeRef": 22, "precioRef": 460}, "girasol": {"semilla": 95, "fertilizacion": 90, "agroquimicos": 85, "labranza": 80, "cosecha": 198, "flete": 65, "rindeRef": 20, "precioRef": 390}, "doble": {"semilla": 155, "fertilizacion": 282, "agroquimicos": 198, "labranza": 125, "cosecha": 228, "flete": 98, "rindeRef": 75, "precioRef": 270}, "doble_cm": {"semilla": 228, "fertilizacion": 318, "agroquimicos": 198, "labranza": 125, "cosecha": 445, "flete": 108, "rindeRef": 20, "precioRef": 380}}, "estructura_usd_ha": 35, "paquetes": {"soja": {"media": {"descripcion": "Semilla RR estándar, inoculante, fertilización fosfatada base", "rinde_min": 14, "rinde_max": 28, "rinde_ref": 22, "delta_semilla": 0, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Semilla de alto potencial, inoculante premium, fósforo + azufre + zinc", "rinde_min": 26, "rinde_max": 44, "rinde_ref": 34, "delta_semilla": 15, "delta_fertilizacion": 30, "delta_agroquimicos": 15}}, "maiz": {"media": {"descripcion": "Híbrido estándar, fertilización NP arranque + cobertura urea", "rinde_min": 44, "rinde_max": 68, "rinde_ref": 56, "delta_semilla": -10, "delta_fertilizacion": -30, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, fertilización completa NPK + S + micronutrientes", "rinde_min": 64, "rinde_max": 104, "rinde_ref": 80, "delta_semilla": 25, "delta_fertilizacion": 50, "delta_agroquimicos": 15}}, "trigo": {"media": {"descripcion": "Variedad estándar, fertilización NP base, un fungicida", "rinde_min": 18, "rinde_max": 34, "rinde_ref": 26, "delta_semilla": -5, "delta_fertilizacion": -25, "delta_agroquimicos": -15}, "alta": {"descripcion": "Variedad de alto rendimiento, NPK + S completo, dos fungicidas", "rinde_min": 30, "rinde_max": 52, "rinde_ref": 40, "delta_semilla": 10, "delta_fertilizacion": 40, "delta_agroquimicos": 25}}, "colza": {"media": {"descripcion": "Variedad estándar, fertilización NPS base", "rinde_min": 12, "rinde_max": 21, "rinde_ref": 17, "delta_semilla": -5, "delta_fertilizacion": -20, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido de alto potencial, NPS completo + boro, fungicida en floración", "rinde_min": 19, "rinde_max": 34, "rinde_ref": 26, "delta_semilla": 15, "delta_fertilizacion": 35, "delta_agroquimicos": 20}}, "girasol": {"media": {"descripcion": "Híbrido estándar, fertilización fosfatada, sin fungicida", "rinde_min": 11, "rinde_max": 21, "rinde_ref": 16, "delta_semilla": -10, "delta_fertilizacion": -15, "delta_agroquimicos": -10}, "alta": {"descripcion": "Híbrido confitero o alto oleico, NPS + boro, fungicida Sclerotinia", "rinde_min": 18, "rinde_max": 30, "rinde_ref": 22, "delta_semilla": 20, "delta_fertilizacion": 25, "delta_agroquimicos": 20}}, "doble": {"media": {"descripcion": "Trigo estándar + soja 2ª estándar, fertilización base ambos", "rinde_min": 44, "rinde_max": 70, "rinde_ref": 56, "delta_semilla": -10, "delta_fertilizacion": -40, "delta_agroquimicos": -20}, "alta": {"descripcion": "Trigo alto rinde + soja 2ª de potencial, fertilización completa", "rinde_min": 66, "rinde_max": 96, "rinde_ref": 78, "delta_semilla": 20, "delta_fertilizacion": 60, "delta_agroquimicos": 25}}, "doble_cm": {"media": {"descripcion": "Colza estándar + maíz 2ª estándar", "rinde_min": 44, "rinde_max": 68, "rinde_ref": 54, "delta_semilla": -15, "delta_fertilizacion": -50, "delta_agroquimicos": -20}, "alta": {"descripcion": "Colza híbrido + maíz 2ª alto potencial, fertilización completa", "rinde_min": 64, "rinde_max": 94, "rinde_ref": 76, "delta_semilla": 25, "delta_fertilizacion": 70, "delta_agroquimicos": 25}}}}}};
   inicializar();
 }
 
@@ -630,16 +675,12 @@ function onCultivo1Change(){
   document.body.setAttribute('data-cultivo', meta.doble ? (c==='doble_ts'?'doble':'colza') : c);
   document.getElementById('badgeLabel').textContent=meta.nombre.toUpperCase();
   const esDoble=meta.doble;
-  // Mostrar u ocultar campos simples vs panel doble
   document.getElementById('rinde1').closest('.fgroup').style.display=esDoble?'none':'flex';
   document.getElementById('precio1').closest('.fgroup').style.display=esDoble?'none':'flex';
   document.getElementById('doblePanel1').style.display=esDoble?'block':'none';
-  if(!esDoble){
-    document.getElementById('rinde1').placeholder='ref: '+getRRef(c)+' qq';
-    document.getElementById('precio1').placeholder='ref: USD '+getPRef(c);
-  } else {
-    setDoblePanelLabels('doblePanel1', meta);
-  }
+  if(esDoble) setDoblePanelLabels('doblePanel1', meta);
+  // Init paquete UI for new cultivo
+  setPaquete(1, paqueteActual[1]||'media');
   renderCostos(c);
 }
 
@@ -648,7 +689,7 @@ function calcular(){
   const c1=document.getElementById('cultivo1').value;
   const meta1=CROP_META[c1];
   const s1=parseFloat(document.getElementById('sup1').value)||null;
-  const cos1=getCostos(c1);
+  const cos1=getCostosConPaquete(c1, 1);
 
   let ing1, mar1, r1, p1, detalleDoble1='', detalleAlqDoble1='';
 
@@ -682,7 +723,7 @@ function calcular(){
   const mar1Propio=+(mar1-estUSD).toFixed(1);           // campo propio = margen - estructura
   const ren1=((mar1Propio/(cos1+estUSD))*100).toFixed(1);
   const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null; // campo alquilado = margen - alquiler (sin estructura)
-  const cosSinComerc1=getCostosSinComerc(c1);
+  const cosSinComerc1=getCostosSinComercConPaquete(c1, 1);
   const pbe1=Math.round(cosSinComerc1/(r1/10));
   const qqbe1=Math.round(cosSinComerc1/p1*10);
 
@@ -771,7 +812,93 @@ function calcular(){
   renderCostos(c1);
 }
 
-// ── ALQUILER ──
+// ══ PAQUETE TECNOLÓGICO ══
+let paqueteActual = { 1: 'media', 2: 'media' };
+
+function getPaqueteData(cultivo, nivel) {
+  const jsonKey = getJsonKey(cultivo);
+  return DATOS.zonas[zonaActual]?.paquetes?.[jsonKey]?.[nivel] || null;
+}
+
+function setPaquete(bloque, nivel) {
+  paqueteActual[bloque] = nivel;
+  const isMedia = nivel === 'media';
+
+  // Update buttons
+  document.getElementById(`paqMedia${bloque}`)?.classList.toggle('active-media', isMedia);
+  document.getElementById(`paqMedia${bloque}`)?.classList.remove('active-alta');
+  document.getElementById(`paqAlta${bloque}`)?.classList.toggle('active-alta', !isMedia);
+  document.getElementById(`paqAlta${bloque}`)?.classList.remove('active-media');
+
+  // Update description and placeholder
+  const c = document.getElementById(`cultivo${bloque}`).value;
+  const paq = getPaqueteData(c, nivel);
+  if (paq) {
+    const descEl = document.getElementById(`paqDesc${bloque}`);
+    if (descEl) descEl.textContent = paq.descripcion;
+    const rindeEl = document.getElementById(`rinde${bloque}`);
+    if (rindeEl) rindeEl.placeholder = `ref: ${paq.rinde_ref} qq (${paq.rinde_min}–${paq.rinde_max})`;
+  }
+  validarRinde(bloque);
+  renderCostos(c);
+}
+
+function validarRinde(bloque) {
+  const c     = document.getElementById(`cultivo${bloque}`)?.value;
+  const rEl   = document.getElementById(`rinde${bloque}`);
+  const wEl   = document.getElementById(`rindeWarn${bloque}`);
+  if (!rEl || !wEl || !c || !zonaActual) return;
+
+  const r   = parseFloat(rEl.value);
+  if (!r) { wEl.classList.remove('show'); return; }
+
+  const nivel = paqueteActual[bloque] || 'media';
+  const paq   = getPaqueteData(c, nivel);
+  if (!paq) { wEl.classList.remove('show'); return; }
+
+  if (r < paq.rinde_min) {
+    wEl.textContent = `⚠ Para paquete ${nivel === 'media' ? 'MEDIA' : 'ALTA'}, el rinde mínimo esperado es ${paq.rinde_min} qq/ha`;
+    wEl.classList.add('show');
+  } else if (r > paq.rinde_max) {
+    wEl.textContent = `⚠ Para paquete ${nivel === 'media' ? 'MEDIA' : 'ALTA'}, el rinde máximo esperado es ${paq.rinde_max} qq/ha`;
+    wEl.classList.add('show');
+  } else {
+    wEl.classList.remove('show');
+  }
+}
+
+// Override getCostos to apply paquete deltas
+function getCostosConPaquete(c, bloque) {
+  const d     = DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];
+  const base  = Object.entries(d)
+    .filter(([k]) => !['rindeRef','precioRef'].includes(k))
+    .reduce((s,[,v]) => s+v, 0);
+
+  const nivel = paqueteActual[bloque] || 'media';
+  const paq   = getPaqueteData(c, nivel);
+  if (!paq) return base;
+
+  return base
+    + (paq.delta_semilla       || 0)
+    + (paq.delta_fertilizacion || 0)
+    + (paq.delta_agroquimicos  || 0);
+}
+
+function getCostosSinComercConPaquete(c, bloque) {
+  const d     = DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];
+  const base  = Object.entries(d)
+    .filter(([k]) => !['rindeRef','precioRef','cosecha','flete'].includes(k))
+    .reduce((s,[,v]) => s+v, 0);
+
+  const nivel = paqueteActual[bloque] || 'media';
+  const paq   = getPaqueteData(c, nivel);
+  if (!paq) return base;
+
+  return base
+    + (paq.delta_semilla       || 0)
+    + (paq.delta_fertilizacion || 0)
+    + (paq.delta_agroquimicos  || 0);
+}
 function toggleAlquiler(){
   const on=document.getElementById('alqSwitch').checked;
   document.getElementById('alqPanel').classList.toggle('open',on);
@@ -960,41 +1087,36 @@ function renderCostos(cultivo){
   const d=getDetalle(cultivo);
   const estUSD=getEstructura();
   const alqUSD=getAlquilerUSD();
-  const totalBase=d.total; // total costos directos sin estructura ni alquiler
-  let h='';
+  const nivel=paqueteActual[1]||'media';
+  const paq=getPaqueteData(cultivo, nivel);
+  const deltaMap={semilla:paq?.delta_semilla||0, fertilizacion:paq?.delta_fertilizacion||0, agroquimicos:paq?.delta_agroquimicos||0};
+  // Build items with paquete deltas applied
+  let totalBase=0;
+  const items={};
   for(const[k,v] of Object.entries(d)){
-    const tot=k==='total';
-    const pct=(!tot&&totalBase>0)?` <span style="font-size:8px;color:var(--muted);font-weight:400;">${Math.round(v/totalBase*100)}%</span>`:'';
-    h+=`<div class="costo-cell${tot?' total-row':''}">
-      <div class="cname${tot?' total':''}">${NOM[k]||k}</div>
-      <div class="cval${tot?' total':''}">USD ${v.toLocaleString('es-AR')}${pct}</div>
-    </div>`;
+    if(k==='total') continue;
+    const vAdj=v+(deltaMap[k]||0);
+    items[k]=vAdj; totalBase+=vAdj;
   }
-  // Estructura — siempre visible
+  let h='';
+  for(const[k,v] of Object.entries(items)){
+    const delta=deltaMap[k]||0;
+    const pct=totalBase>0?Math.round(v/totalBase*100):0;
+    const deltaTag=delta!==0?` <span style="font-size:8px;color:${delta>0?'#88ccff':'#c890ff'};font-weight:400;">${delta>0?'+':''}${delta}</span>`:'';
+    h+=`<div class="costo-cell"><div class="cname">${NOM[k]||k}</div><div class="cval">USD ${v.toLocaleString('es-AR')}${deltaTag} <span style="font-size:8px;color:var(--muted);font-weight:400;">${pct}%</span></div></div>`;
+  }
+  h+=`<div class="costo-cell total-row"><div class="cname total">TOTAL COSTOS DIRECTOS</div><div class="cval total">USD ${totalBase.toLocaleString('es-AR',{maximumFractionDigits:0})}</div></div>`;
   if(estUSD>0){
     const totalPropio=totalBase+estUSD;
-    h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);">
-      <div class="cname" style="color:#88ccff;">Estructura</div>
-      <div class="cval" style="color:#88ccff;">USD ${estUSD.toLocaleString('es-AR')}</div>
-    </div>
-    <div class="costo-cell total-row">
-      <div class="cname total">TOTAL CAMPO PROPIO</div>
-      <div class="cval total">USD ${totalPropio.toLocaleString('es-AR',{maximumFractionDigits:0})}</div>
-    </div>`;
+    h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);"><div class="cname" style="color:#88ccff;">Estructura</div><div class="cval" style="color:#88ccff;">USD ${estUSD.toLocaleString('es-AR')}</div></div>
+    <div class="costo-cell total-row"><div class="cname total">TOTAL CAMPO PROPIO</div><div class="cval total">USD ${totalPropio.toLocaleString('es-AR',{maximumFractionDigits:0})}</div></div>`;
   }
-  // Alquiler — solo si está activo
   if(alqUSD>0){
     const qq=document.getElementById('alqQq').value;
     const ps=document.getElementById('alqPrecioSoja').value;
     const totalAlq=totalBase+alqUSD;
-    h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);">
-      <div class="cname" style="color:#c890ff;">Arrendamiento</div>
-      <div class="cval" style="color:#c890ff;">USD ${alqUSD.toLocaleString('es-AR')} <span style="font-size:9px;color:var(--muted);font-weight:400;">(${qq} qq × $${ps})</span></div>
-    </div>
-    <div class="costo-cell total-row">
-      <div class="cname total">TOTAL CAMPO ALQUILADO</div>
-      <div class="cval total">USD ${totalAlq.toLocaleString('es-AR',{maximumFractionDigits:0})}</div>
-    </div>`;
+    h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);"><div class="cname" style="color:#c890ff;">Arrendamiento</div><div class="cval" style="color:#c890ff;">USD ${alqUSD.toLocaleString('es-AR')} <span style="font-size:9px;color:var(--muted);font-weight:400;">(${qq} qq × $${ps})</span></div></div>
+    <div class="costo-cell total-row"><div class="cname total">TOTAL CAMPO ALQUILADO</div><div class="cval total">USD ${totalAlq.toLocaleString('es-AR',{maximumFractionDigits:0})}</div></div>`;
   }
   document.getElementById('costosGrid').innerHTML=h;
 }
