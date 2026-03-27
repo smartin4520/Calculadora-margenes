@@ -651,8 +651,18 @@ function seleccionarZona(key){
 function getJsonKey(c){ return CROP_META[c]?.jsonKey || c; }
 function getEstructura(){ return DATOS.zonas[zonaActual]?.estructura_usd_ha || 0; }
 function getCostos(c){const d=DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];return Object.entries(d).filter(([k])=>!['rindeRef','precioRef'].includes(k)).reduce((s,[,v])=>s+v,0);}
-// Costos directos SIN gastos de comercialización (cosecha + flete) — para Rinde de Indiferencia
+// Costos directos SIN gastos de comercialización — para Rinde/Precio de Indiferencia
 function getCostosSinComerc(c){const d=DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];return Object.entries(d).filter(([k])=>!['rindeRef','precioRef','cosecha','flete'].includes(k)).reduce((s,[,v])=>s+v,0);}
+
+// Costos totales incluyendo alquiler si está activo — para gráficos y cálculos de indiferencia
+function getCostosTotal(c, bloque){
+  return getCostosConPaquete(c, bloque) + getAlquilerUSD();
+}
+function getCostosSinComercTotal(c, bloque){
+  return getCostosSinComercConPaquete(c, bloque) + getAlquilerUSD();
+}
+// margen usando costos totales (con alquiler si corresponde)
+function margenTotal(c,r,p,bloque){return(r/10)*p - getCostosTotal(c, bloque||1);}
 function getDetalle(c){const d=DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];const det={};let tot=0;for(const[k,v] of Object.entries(d)){if(!['rindeRef','precioRef'].includes(k)){det[k]=v;tot+=v;}}det.total=tot;return det;}
 function getRRef(c){const m=CROP_META[c];if(m?.doble){return DATOS.zonas[zonaActual].cultivos[m.jsonKey]?.rindeRef||0;}return DATOS.zonas[zonaActual].cultivos[c]?.rindeRef||0;}
 function getPRef(c){const m=CROP_META[c];if(m?.doble){return DATOS.zonas[zonaActual].cultivos[m.jsonKey]?.precioRef||0;}return DATOS.zonas[zonaActual].cultivos[c]?.precioRef||0;}
@@ -736,10 +746,11 @@ function calcular(){
 
   const alqUSD=getAlquilerUSD();
   const estUSD=getEstructura();
-  const mar1Propio=+(mar1-estUSD).toFixed(1);           // campo propio = margen - estructura
+  const mar1Propio=+(mar1-estUSD).toFixed(1);
   const ren1=((mar1Propio/(cos1+estUSD))*100).toFixed(1);
-  const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null; // campo alquilado = margen - alquiler (sin estructura)
-  const cosSinComerc1=getCostosSinComercConPaquete(c1, 1);
+  const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null;
+  // Indiferencia: incluye alquiler si está activo
+  const cosSinComerc1=getCostosSinComercTotal(c1, 1);
   const pbe1=Math.round(cosSinComerc1/(r1/10));
   const qqbe1=Math.round(cosSinComerc1/p1*10);
 
@@ -799,7 +810,7 @@ function calcular(){
     }
 
     const ren2=((mar2/cos2)*100).toFixed(1);
-    const cosSinComerc2=getCostosSinComerc(c2);
+    const cosSinComerc2=getCostosSinComercTotal(c2, 2);
     const pbe2=Math.round(cosSinComerc2/(r2/10));
     const qqbe2=Math.round(cosSinComerc2/p2*10);
     const diff=+(mar1-mar2).toFixed(1), k1=cc(mar1), k2=cc(mar2), kd=cc(diff);
@@ -998,15 +1009,13 @@ function getRangos(c){return RANGOS[c]||{pMin:200,pMax:500,pStep:20,rMin:15,rMax
 
 function generarLinea(cultivo,rinde,pBase){
   const labels=[],data=[];
-  // Precio donde margen TOTAL = 0 (cruce real de la línea con y=0)
-  const cosTotal = getCostosConPaquete(cultivo,1);
+  // Cruce real: costos totales con alquiler si está activo
+  const cosTotal = getCostosTotal(cultivo,1);
   const pCruce   = cosTotal/(rinde/10);
-  // Precio de indiferencia sin comerc (para la etiqueta informativa)
-  const pInd     = getCostosSinComercConPaquete(cultivo,1)/(rinde/10);
   const{pMin,pMax,pStep}=getRangos(cultivo);
-  // Arrancar desde 20% antes del cruce real para mostrar zona de pérdida
   const startP=Math.floor(Math.min(pMin, pCruce*0.80)/pStep)*pStep;
-  for(let p=startP;p<=pMax;p+=pStep){labels.push(p);data.push(+margen(cultivo,rinde,p).toFixed(1));}
+  // Usar margenTotal (incluye alquiler) para todos los puntos del gráfico
+  for(let p=startP;p<=pMax;p+=pStep){labels.push(p);data.push(+margenTotal(cultivo,rinde,p,1).toFixed(1));}
   if(lineChart)lineChart.destroy();
   const ctx=document.getElementById('lineChart').getContext('2d');
   const col=CROP_COLOR[cultivo]||'#4a9eff';
@@ -1077,16 +1086,17 @@ function rangoArray(min, max, step) {
 
 function generarHeatmap(cultivo,rBase,pBase){
   const sub = document.getElementById('heatmapSub');
-  if (sub) {
-    const rng0 = HEATMAP_RANGES[cultivo];
-    if (rng0) sub.textContent = `Rinde ${rng0.rMin}–${rng0.rMax} qq · Precio USD ${rng0.pMin}–${rng0.pMax}/tn`;
+  if(sub){
+    const rng0=HEATMAP_RANGES[getJsonKey(cultivo)];
+    const alqLabel=getAlquilerUSD()>0?' · incl. alquiler':'';
+    if(rng0) sub.textContent=`Rinde ${rng0.rMin}–${rng0.rMax} qq · Precio USD ${rng0.pMin}–${rng0.pMax}/tn${alqLabel}`;
   }
   const rng = HEATMAP_RANGES[cultivo] || { pMin:pBase*0.6, pMax:pBase*1.4, pStep:Math.round(pBase*0.08), rMin:rBase*0.5, rMax:rBase*1.5, rStep:Math.round(rBase*0.1) };
   const rindes  = rangoArray(rng.rMin, rng.rMax, rng.rStep);
   const precios = rangoArray(rng.pMin, rng.pMax, rng.pStep);
   const data=[];
   let vMin=Infinity,vMax=-Infinity;
-  for(const r of rindes)for(const p of precios){const v=+margen(cultivo,r,p).toFixed(0);data.push({x:p,y:r,v});if(v<vMin)vMin=v;if(v>vMax)vMax=v;}
+  for(const r of rindes)for(const p of precios){const v=+margenTotal(cultivo,r,p,1).toFixed(0);data.push({x:p,y:r,v});if(v<vMin)vMin=v;if(v>vMax)vMax=v;}
   if(heatmapChart){heatmapChart.destroy();heatmapChart=null;}
   const ctx=document.getElementById('heatmap').getContext('2d');
   const xL=[...new Set(data.map(d=>d.x))].sort((a,b)=>a-b);
