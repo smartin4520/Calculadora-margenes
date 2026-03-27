@@ -512,6 +512,22 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
           * Incluye semillas, fertilización, agroquímicos, labranza, cosecha & flete corto (campo → planta) y flete largo (planta → puerto). No incluye arrendamiento ni gastos de estructura.<br>
           Datos cargados desde <code style="color:var(--text-dim)">costos.json</code> — editá ese archivo para actualizar los valores por zona y campaña.
         </p>
+        <!-- Gráfico de torta incidencia de costos -->
+        <div id="pieWrap" style="display:none;margin-top:24px;border-top:1px solid var(--border2);padding-top:20px;">
+          <div class="chart-hdr">
+            <div>
+              <div class="chart-ttl">Incidencia de costos</div>
+              <div class="chart-sub" id="pieSub">Participación % de cada ítem sobre el total</div>
+            </div>
+            <div class="chart-badge">TORTA</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center;">
+            <div style="position:relative;max-width:260px;margin:0 auto;width:100%;">
+              <canvas id="pieChart"></canvas>
+            </div>
+            <div id="pieLegend" style="font-family:var(--mono);font-size:9px;color:var(--text-dim);display:flex;flex-direction:column;gap:8px;"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -575,7 +591,7 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
   </div>
 </div>
 <script>
-let DATOS=null,zonaActual=null,comparando=false,lineChart=null,heatmapChart=null;
+let DATOS=null,zonaActual=null,comparando=false,lineChart=null,heatmapChart=null,pieChart=null;
 const CROP_META={
   soja:    {nombre:'Soja',           emoji:'🟢', doble:false},
   maiz:    {nombre:'Maíz',           emoji:'🟠', doble:false},
@@ -810,6 +826,7 @@ function calcular(){
   generarLinea(c1,r1,p1);
   generarHeatmap(c1,r1,p1);
   renderCostos(c1);
+  generarTorta(c1);
 }
 
 // ══ PAQUETE TECNOLÓGICO ══
@@ -950,8 +967,10 @@ function resetearSilencioso(){
   document.getElementById('resultado').style.display='none';
   document.getElementById('graficos').style.display='none';
   document.getElementById('exportRow').style.display='none';
+  document.getElementById('pieWrap').style.display='none';
   if(lineChart){lineChart.destroy();lineChart=null;}
   if(heatmapChart){heatmapChart.destroy();heatmapChart=null;}
+  if(pieChart){pieChart.destroy();pieChart=null;}
 }
 function resetear(){
   ['rinde1','precio1','sup1','rinde2','precio2','sup2',
@@ -979,10 +998,14 @@ function getRangos(c){return RANGOS[c]||{pMin:200,pMax:500,pStep:20,rMin:15,rMax
 
 function generarLinea(cultivo,rinde,pBase){
   const labels=[],data=[];
-  const pbe=getCostosSinComerc(cultivo)/(rinde/10);
+  // Precio donde margen TOTAL = 0 (cruce real de la línea con y=0)
+  const cosTotal = getCostosConPaquete(cultivo,1);
+  const pCruce   = cosTotal/(rinde/10);
+  // Precio de indiferencia sin comerc (para la etiqueta informativa)
+  const pInd     = getCostosSinComercConPaquete(cultivo,1)/(rinde/10);
   const{pMin,pMax,pStep}=getRangos(cultivo);
-  // Arrancar desde un 20% por debajo del precio de indiferencia para mostrar zona de pérdida
-  const startP=Math.floor(Math.min(pMin, pbe*0.80)/pStep)*pStep;
+  // Arrancar desde 20% antes del cruce real para mostrar zona de pérdida
+  const startP=Math.floor(Math.min(pMin, pCruce*0.80)/pStep)*pStep;
   for(let p=startP;p<=pMax;p+=pStep){labels.push(p);data.push(+margen(cultivo,rinde,p).toFixed(1));}
   if(lineChart)lineChart.destroy();
   const ctx=document.getElementById('lineChart').getContext('2d');
@@ -991,23 +1014,37 @@ function generarLinea(cultivo,rinde,pBase){
   grad.addColorStop(0,col+'44');grad.addColorStop(1,col+'00');
   const bePlugin={id:'beMarker',afterDraw(chart){
     const{ctx:c,scales:{x,y},chartArea:{top,bottom,left,right}}=chart;
-    const bi=labels.reduce((b,v,i)=>Math.abs(v-pbe)<Math.abs(labels[b]-pbe)?i:b,0);
-    const xp=x.getPixelForValue(bi),yp=y.getPixelForValue(0);
+    // Encontrar índice donde margen cruza cero (cambio de signo)
+    let cruceIdx=0;
+    for(let i=0;i<data.length-1;i++){
+      if(data[i]<=0&&data[i+1]>0){cruceIdx=i;break;}
+      if(Math.abs(data[i])<Math.abs(data[cruceIdx])) cruceIdx=i;
+    }
+    const xp=x.getPixelForValue(cruceIdx);
+    const yp=y.getPixelForValue(0);
     c.save();
-    c.setLineDash([4,4]);c.strokeStyle='#ffd84a66';c.lineWidth=1.5;
+    c.setLineDash([4,4]);c.strokeStyle='#ffd84a88';c.lineWidth=1.5;
     c.beginPath();c.moveTo(xp,top);c.lineTo(xp,bottom);c.stroke();
     c.setLineDash([3,3]);c.strokeStyle='#ffffff18';c.lineWidth=1;
     c.beginPath();c.moveTo(left,yp);c.lineTo(right,yp);c.stroke();
     c.setLineDash([]);
     const sz=7;c.fillStyle='#ffd84a';c.strokeStyle='#080d14';c.lineWidth=2;
-    c.beginPath();c.moveTo(xp,yp-sz);c.lineTo(xp+sz,yp);c.lineTo(xp,yp+sz);c.lineTo(xp-sz,yp);c.closePath();c.fill();c.stroke();
+    c.beginPath();c.moveTo(xp,yp-sz);c.lineTo(xp+sz,yp);c.lineTo(xp,yp+sz);c.lineTo(xp-sz,yp);
+    c.closePath();c.fill();c.stroke();
     c.fillStyle='#ffd84a';c.font='600 10px IBM Plex Mono,monospace';c.textAlign='center';
-    c.fillText('P.Ind: USD '+Math.round(pbe),xp,top+14);c.restore();
+    c.fillText('Eq: USD '+Math.round(pCruce),xp,top+14);
+    c.restore();
   }};
-  lineChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Margen',data,borderColor:col,backgroundColor:grad,borderWidth:2.5,pointRadius:2,pointBackgroundColor:col,fill:true,tension:0.35}]},
-    options:{responsive:true,plugins:{legend:{display:false},tooltip:{backgroundColor:'#101a28',borderColor:'#1c2e44',borderWidth:1,titleColor:'#5a7fa8',bodyColor:'#c8daf0',bodyFont:{family:'IBM Plex Mono',size:12},callbacks:{title:i=>`Precio: USD ${i[0].label}/tn`,label:c=>` Margen: USD ${c.parsed.y.toLocaleString('es-AR')}/ha`}}},
-    scales:{x:{ticks:{color:'#2e4a6a',font:{family:'IBM Plex Mono',size:8},callback(v,i){return i%5===0?'USD '+this.getLabelForValue(v):''}},grid:{color:'#111e30'}},
-    y:{ticks:{color:'#2e4a6a',font:{family:'IBM Plex Mono',size:8},callback:v=>'USD '+v.toLocaleString('es-AR')},grid:{color:'#111e30'}}}},plugins:[bePlugin]});
+  lineChart=new Chart(ctx,{type:'line',
+    data:{labels:labels.map(v=>'$'+v),datasets:[{label:'Margen',data,borderColor:col,backgroundColor:grad,borderWidth:2.5,pointRadius:2,pointBackgroundColor:col,fill:true,tension:0.35}]},
+    options:{responsive:true,
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#101a28',borderColor:'#1c2e44',borderWidth:1,titleColor:'#5a7fa8',bodyColor:'#c8daf0',bodyFont:{family:'IBM Plex Mono',size:12},
+        callbacks:{title:i=>`Precio: USD ${i[0].label.replace('$','')}/tn`,label:c=>` Margen: USD ${c.parsed.y.toLocaleString('es-AR')}/ha`}}},
+      scales:{
+        x:{type:'category',ticks:{color:'#2e4a6a',font:{family:'IBM Plex Mono',size:7},maxRotation:45,minRotation:45,maxTicksLimit:25},grid:{color:'#111e30'}},
+        y:{ticks:{color:'#2e4a6a',font:{family:'IBM Plex Mono',size:8},callback:v=>'USD '+v.toLocaleString('es-AR')},grid:{color:'#111e30'}}
+      }
+    },plugins:[bePlugin]});
 }
 
 function lerp(a,b,t){return{r:a.r+(b.r-a.r)*t,g:a.g+(b.g-a.g)*t,b:a.b+(b.b-a.b)*t};}
@@ -1387,6 +1424,87 @@ function cargarDesdeURL(){
 
   // Calcular automáticamente si hay suficientes datos
   if(r1&&p1) setTimeout(calcular, 300);
+}
+
+// ══ GRÁFICO DE TORTA ══
+function generarTorta(cultivo){
+  const d       = getDetalle(cultivo);
+  const nivel   = paqueteActual[1]||'media';
+  const paq     = getPaqueteData(cultivo, nivel);
+  const deltaMap= {semilla:paq?.delta_semilla||0, fertilizacion:paq?.delta_fertilizacion||0, agroquimicos:paq?.delta_agroquimicos||0};
+  const alqUSD  = getAlquilerUSD();
+  const estUSD  = getEstructura();
+
+  // Construir ítems con deltas aplicados
+  const items={};
+  for(const[k,v] of Object.entries(d)){
+    if(k==='total') continue;
+    items[k] = v + (deltaMap[k]||0);
+  }
+  // Agregar estructura y alquiler si corresponde
+  if(estUSD>0) items['estructura'] = estUSD;
+  if(alqUSD>0) items['arrendamiento'] = alqUSD;
+
+  const LABELS_PIE = {
+    semilla:'Semillas', fertilizacion:'Fertilización',
+    agroquimicos:'Agroquímicos', labranza:'Labranza & Siembra',
+    cosecha:'Cosecha & Flete corto', flete:'Flete largo',
+    estructura:'Estructura', arrendamiento:'Arrendamiento',
+  };
+  const COLORS_PIE = [
+    '#4a9eff','#f07820','#c8a040','#5cb85c',
+    '#8a6cc8','#d64e3a','#88ccff','#c890ff',
+  ];
+
+  const labels = Object.keys(items).map(k=>LABELS_PIE[k]||k);
+  const values = Object.values(items);
+  const total  = values.reduce((a,b)=>a+b,0);
+  const colors = Object.keys(items).map((_,i)=>COLORS_PIE[i%COLORS_PIE.length]);
+
+  // Subtítulo
+  const campoTipo = alqUSD>0 ? 'campo alquilado' : estUSD>0 ? 'campo propio' : 'costos directos';
+  document.getElementById('pieSub').textContent = `Participación % sobre ${campoTipo} — total USD ${total.toLocaleString('es-AR',{maximumFractionDigits:0})}/ha`;
+
+  // Leyenda manual
+  const legEl = document.getElementById('pieLegend');
+  legEl.innerHTML = labels.map((l,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></div>
+      <span style="color:var(--text-dim);">${l}</span>
+      <span style="margin-left:auto;color:var(--text);font-weight:600;">
+        USD ${values[i].toLocaleString('es-AR')} <span style="color:var(--muted);">${Math.round(values[i]/total*100)}%</span>
+      </span>
+    </div>`).join('');
+
+  document.getElementById('pieWrap').style.display='block';
+  if(pieChart){pieChart.destroy();pieChart=null;}
+
+  const ctx=document.getElementById('pieChart').getContext('2d');
+  pieChart=new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels,
+      datasets:[{data:values,backgroundColor:colors,borderColor:'#101a28',borderWidth:2,hoverOffset:6}]
+    },
+    options:{
+      responsive:true,
+      cutout:'55%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#101a28',borderColor:'#1c2e44',borderWidth:1,
+          titleColor:'#5a7fa8',bodyColor:'#c8daf0',
+          bodyFont:{family:'IBM Plex Mono',size:11},
+          callbacks:{
+            label:c=>{
+              const pct=Math.round(c.parsed/total*100);
+              return ` USD ${c.parsed.toLocaleString('es-AR')} (${pct}%)`;
+            }
+          }
+        }
+      }
+    }
+  });
 }
 
 cargarDatos();
