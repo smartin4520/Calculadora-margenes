@@ -1110,7 +1110,8 @@ function generarHeatmap(cultivo,rBase,pBase){
       const yi=yL.indexOf(d.y);
       if(xi<0||yi<0) continue;
       const xCenter=xScale.getPixelForValue(xi);
-      const yCenter=yScale.getPixelForValue(yL.length-1-yi);
+      // y-axis is reversed (largest at top), so map yi to reversed position
+      const yCenter=yScale.getPixelForValue(NR2-1-yi);
       const cw=(right-left)/NP2, ch=(bottom-top)/NR2;
       const px=xCenter-cw/2, py=yCenter-ch/2;
       c.fillStyle=marginColor(d.v,vMin,vMax);
@@ -1126,7 +1127,7 @@ function generarHeatmap(cultivo,rBase,pBase){
     options:{responsive:true,animation:false,plugins:{legend:{display:false},tooltip:{enabled:false}},
     scales:{
       x:{type:'category',labels:xL.map(v=>'$'+v),offset:true,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:7},maxRotation:45,minRotation:45},grid:{display:false},title:{display:true,text:'Precio (USD/tn)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}},
-      y:{type:'category',labels:yL.map(v=>v+' qq'),offset:true,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:8}},grid:{display:false},title:{display:true,text:'Rinde (qq/ha)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}}
+      y:{type:'category',labels:[...yL].reverse().map(v=>v+' qq'),offset:true,ticks:{color:'#5a7fa8',font:{family:'IBM Plex Mono',size:8}},grid:{display:false},title:{display:true,text:'Rinde (qq/ha)',color:'#5a7fa8',font:{family:'IBM Plex Mono',size:9},padding:4}}
     }},plugins:[hp]});
 }
 
