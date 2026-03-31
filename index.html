@@ -521,8 +521,8 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
             </div>
             <div class="chart-badge">TORTA</div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center;">
-            <div style="position:relative;max-width:260px;margin:0 auto;width:100%;">
+          <div style="display:grid;grid-template-columns:1fr;gap:16px;align-items:center;">
+            <div style="position:relative;max-width:220px;margin:0 auto;width:100%;">
               <canvas id="pieChart"></canvas>
             </div>
             <div id="pieLegend" style="font-family:var(--mono);font-size:9px;color:var(--text-dim);display:flex;flex-direction:column;gap:8px;"></div>
@@ -1070,12 +1070,14 @@ function marginColor(v,vMin,vMax){
 
 // Rangos fijos por cultivo: {pMin, pMax, pStep, rMin, rMax, rStep}
 const HEATMAP_RANGES = {
-  soja:   { pMin:250, pMax:400, pStep:10, rMin:15, rMax:55, rStep:5  },
-  maiz:   { pMin:130, pMax:250, pStep:10, rMin:40, rMax:120,rStep:10 },
-  trigo:  { pMin:150, pMax:290, pStep:10, rMin:20, rMax:65, rStep:5  },
-  colza:  { pMin:320, pMax:560, pStep:20, rMin:10, rMax:45, rStep:5  },
-  girasol:{ pMin:270, pMax:480, pStep:20, rMin:10, rMax:40, rStep:5  },
-  doble:  { pMin:180, pMax:360, pStep:15, rMin:40, rMax:115,rStep:10 },
+  soja:   { pMin:250, pMax:400, pStep:30, rMin:15, rMax:55, rStep:8  },
+  maiz:   { pMin:130, pMax:250, pStep:24, rMin:40, rMax:120,rStep:16 },
+  trigo:  { pMin:150, pMax:290, pStep:28, rMin:20, rMax:65, rStep:9  },
+  colza:  { pMin:320, pMax:560, pStep:48, rMin:10, rMax:45, rStep:7  },
+  girasol:{ pMin:270, pMax:480, pStep:42, rMin:10, rMax:40, rStep:6  },
+  doble_ts:{ pMin:180,pMax:360, pStep:36, rMin:40, rMax:115,rStep:15 },
+  doble_cm:{ pMin:200,pMax:380, pStep:36, rMin:40, rMax:115,rStep:15 },
+  doble:  { pMin:180, pMax:360, pStep:36, rMin:40, rMax:115,rStep:15 },
 };
 
 function rangoArray(min, max, step) {
@@ -1115,7 +1117,7 @@ function generarHeatmap(cultivo,rBase,pBase){
       const px=xCenter-cw/2, py=yCenter-ch/2;
       c.fillStyle=marginColor(d.v,vMin,vMax);
       c.fillRect(px+1,py+1,cw-2,ch-2);
-      const fs=Math.max(7,Math.min(11,cw*0.22));
+      const fs=Math.max(9,Math.min(13,cw*0.28));
       c.font=`600 ${fs}px IBM Plex Mono,monospace`;
       c.fillStyle=d.v<0?'rgba(255,255,255,.55)':'rgba(0,0,0,.55)';
       c.textAlign='center';c.textBaseline='middle';
@@ -1478,10 +1480,10 @@ function generarTorta(cultivo){
   // Leyenda manual
   const legEl = document.getElementById('pieLegend');
   legEl.innerHTML = labels.map((l,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></div>
-      <span style="color:var(--text-dim);">${l}</span>
-      <span style="margin-left:auto;color:var(--text);font-weight:600;">
+      <span style="color:var(--text-dim);flex:1;min-width:100px;">${l}</span>
+      <span style="color:var(--text);font-weight:600;white-space:nowrap;">
         USD ${values[i].toLocaleString('es-AR')} <span style="color:var(--muted);">${Math.round(values[i]/total*100)}%</span>
       </span>
     </div>`).join('');
