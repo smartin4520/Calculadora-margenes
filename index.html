@@ -654,12 +654,21 @@ function getCostos(c){const d=DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];re
 // Costos directos SIN gastos de comercialización — para Rinde/Precio de Indiferencia
 function getCostosSinComerc(c){const d=DATOS.zonas[zonaActual].cultivos[getJsonKey(c)];return Object.entries(d).filter(([k])=>!['rindeRef','precioRef','cosecha','flete'].includes(k)).reduce((s,[,v])=>s+v,0);}
 
-// Costos totales incluyendo alquiler si está activo — para gráficos y cálculos de indiferencia
+// Factor de alquiler por cultivo (fracción del costo anual que le corresponde)
+// Trigo: 40% (cultivo invernal, ciclo corto)
+// Soja, maíz, girasol, colza: 100% (cultivo estival, ocupa el ciclo principal)
+// Doble cultivo: se maneja por separado en calcular()
+function getFactorAlquiler(c){
+  if(c==='trigo') return 0.40;
+  return 1.0;
+}
+
+// Costos totales incluyendo alquiler con factor por cultivo
 function getCostosTotal(c, bloque){
-  return getCostosConPaquete(c, bloque) + getAlquilerUSD();
+  return getCostosConPaquete(c, bloque) + getAlquilerUSD() * getFactorAlquiler(c);
 }
 function getCostosSinComercTotal(c, bloque){
-  return getCostosSinComercConPaquete(c, bloque) + getAlquilerUSD();
+  return getCostosSinComercConPaquete(c, bloque) + getAlquilerUSD() * getFactorAlquiler(c);
 }
 // margen usando costos totales (con alquiler si corresponde)
 function margenTotal(c,r,p,bloque){return(r/10)*p - getCostosTotal(c, bloque||1);}
@@ -746,9 +755,11 @@ function calcular(){
 
   const alqUSD=getAlquilerUSD();
   const estUSD=getEstructura();
+  const factorAlq=getFactorAlquiler(c1);
+  const alqAplicado=+(alqUSD*factorAlq).toFixed(1);
   const mar1Propio=+(mar1-estUSD).toFixed(1);
   const ren1=((mar1Propio/(cos1+estUSD))*100).toFixed(1);
-  const mar1Alq=alqUSD>0?+(mar1-alqUSD).toFixed(1):null;
+  const mar1Alq=alqUSD>0?+(mar1-alqAplicado).toFixed(1):null;
   // Indiferencia: incluye alquiler si está activo
   const cosSinComerc1=getCostosSinComercTotal(c1, 1);
   const pbe1=Math.round(cosSinComerc1/(r1/10));
@@ -779,7 +790,7 @@ function calcular(){
       <div class="metric inf"><div class="mlbl">Ingreso bruto</div><div class="mval inf">${fmt(ing1)}</div><div class="mnote">${meta1.doble?detalleDoble1:'por hectárea'}</div></div>
       <div class="metric neu"><div class="mlbl">Costos directos</div><div class="mval neu">${fmt(cos1)}</div><div class="mnote">${DATOS.zonas[zonaActual].nombre}</div></div>
       <div class="metric ${cc(mar1Propio)} highlight"><div class="mlbl">⬟ Margen — Campo propio</div><div class="mval ${cc(mar1Propio)}">${fmt(mar1Propio)}</div><div class="mnote">incl. estructura ${fmt(estUSD)}/ha</div></div>
-      ${mar1Alq!==null?`<div class="metric ${cc(mar1Alq)} highlight-rent"><div class="mlbl">⬟ Margen — Campo alquilado</div><div class="mval rent">${fmt(mar1Alq)}</div><div class="mnote">${meta1.doble?margenDobleDetalle:`alquiler: ${document.getElementById('alqQq').value} qq = ${fmt(alqUSD)}/ha`}</div></div>`:''}
+      ${mar1Alq!==null?`<div class="metric ${cc(mar1Alq)} highlight-rent"><div class="mlbl">⬟ Margen — Campo alquilado</div><div class="mval rent">${fmt(mar1Alq)}</div><div class="mnote">${meta1.doble?margenDobleDetalle:`alquiler: ${fmt(alqAplicado)}/ha${factorAlq<1?' ('+Math.round(factorAlq*100)+'% del total)':''}`}</div></div>`:''}
       <div class="metric ${cc(mar1Propio)}"><div class="mlbl">Retorno s/ inversión</div><div class="mval ${cc(mar1Propio)}">${ren1}%</div><div class="mnote">margen ÷ (costos + estructura)</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Precio de indiferencia</div><div class="mval be">USD ${pbe1}</div><div class="mnote">sin comerc. · a ${r1} qq/ha</div></div>
       <div class="metric highlight-be"><div class="mlbl">◆ Rinde de indiferencia</div><div class="mval be">${qqbe1} qq</div><div class="mnote">sin comerc. · a USD ${p1}/tn</div></div>
@@ -1163,8 +1174,11 @@ function renderCostos(cultivo){
   if(alqUSD>0){
     const qq=document.getElementById('alqQq').value;
     const ps=document.getElementById('alqPrecioSoja').value;
-    const totalAlq=totalBase+alqUSD;
-    h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);"><div class="cname" style="color:#c890ff;">Arrendamiento</div><div class="cval" style="color:#c890ff;">USD ${alqUSD.toLocaleString('es-AR')} <span style="font-size:9px;color:var(--muted);font-weight:400;">(${qq} qq × $${ps})</span></div></div>
+    const factor=getFactorAlquiler(cultivo);
+    const alqApl=+(alqUSD*factor).toFixed(1);
+    const totalAlq=totalBase+alqApl;
+    const factorLabel=factor<1?` · ${Math.round(factor*100)}% del total`:'';
+    h+=`<div class="costo-cell" style="border-top:1px solid var(--border2);"><div class="cname" style="color:#c890ff;">Arrendamiento${factorLabel}</div><div class="cval" style="color:#c890ff;">USD ${alqApl.toLocaleString('es-AR')} <span style="font-size:9px;color:var(--muted);font-weight:400;">(${qq} qq × $${ps}${factor<1?' × '+Math.round(factor*100)+'%':''})</span></div></div>
     <div class="costo-cell total-row"><div class="cname total">TOTAL CAMPO ALQUILADO</div><div class="cval total">USD ${totalAlq.toLocaleString('es-AR',{maximumFractionDigits:0})}</div></div>`;
   }
   document.getElementById('costosGrid').innerHTML=h;
@@ -1455,7 +1469,7 @@ function generarTorta(cultivo){
   }
   // Agregar estructura y alquiler si corresponde
   if(estUSD>0) items['estructura'] = estUSD;
-  if(alqUSD>0) items['arrendamiento'] = alqUSD;
+  if(alqUSD>0) items['arrendamiento'] = +(alqUSD * getFactorAlquiler(cultivo)).toFixed(1);
 
   const LABELS_PIE = {
     semilla:'Semillas', fertilizacion:'Fertilización',
