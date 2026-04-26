@@ -540,11 +540,11 @@ footer{position:relative;z-index:1;text-align:center;padding:20px 24px 32px;font
             </div>
             <div class="chart-badge">TORTA</div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr;gap:16px;align-items:center;">
-            <div style="position:relative;max-width:220px;margin:0 auto;width:100%;">
+          <div style="display:flex;flex-direction:column;gap:16px;align-items:center;">
+            <div style="position:relative;width:100%;max-width:280px;margin:0 auto;">
               <canvas id="pieChart"></canvas>
             </div>
-            <div id="pieLegend" style="font-family:var(--mono);font-size:9px;color:var(--text-dim);display:flex;flex-direction:column;gap:8px;"></div>
+            <div id="pieLegend" style="width:100%;font-family:var(--mono);font-size:10px;color:var(--text-dim);display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;"></div>
           </div>
         </div>
       </div>
@@ -621,7 +621,7 @@ const CROP_META={
   doble_cm:{nombre:'Colza / Maíz',   emoji:'🟤', doble:true, c1:'colza', c2:'maiz',  lbl1:'COLZA (INVIERNO)', lbl2:'MAÍZ (VERANO)',      jsonKey:'doble_cm'},
 };
 const CROP_COLOR={soja:'#5cb85c',maiz:'#f07820',trigo:'#c8a040',colza:'#d4c800',girasol:'#d4880a',doble_ts:'#8a6cc8',doble_cm:'#6688cc'};
-const NOM={semilla:'Semillas',fertilizacion:'Fertilización',agroquimicos:'Agroquímicos',labranza:'Labranza & Siembra',cosecha:'Cosecha & Flete corto',flete:'Flete largo (planta → puerto)',total:'TOTAL'};
+const NOM={semilla:'Semillas',fertilizacion:'Fertilización',agroquimicos:'Agroquímicos',labranza:'Labranza & Siembra',cosecha:'Cosecha',flete:'Flete (corto + largo)',total:'TOTAL'};
 
 function cargarDatos(){
   // Datos incrustados directamente — no requiere archivo externo
@@ -686,8 +686,9 @@ function getFactorAlquiler(c){
 function getCostosTotal(c, bloque){
   return getCostosConPaquete(c, bloque) + getAlquilerUSD() * getFactorAlquiler(c);
 }
+// Indiferencia ahora usa TODOS los costos (incluyendo comerc. + alquiler)
 function getCostosSinComercTotal(c, bloque){
-  return getCostosSinComercConPaquete(c, bloque) + getAlquilerUSD() * getFactorAlquiler(c);
+  return getCostosTotal(c, bloque);
 }
 // margen usando costos totales (con alquiler si corresponde)
 function margenTotal(c,r,p,bloque){return(r/10)*p - getCostosTotal(c, bloque||1);}
@@ -700,7 +701,7 @@ function margenDoble(c,r1a,p1a,r1b,p1b){
   const ing=(r1a/10)*p1a+(r1b/10)*p1b;
   return +(ing-getCostos(c)).toFixed(1);
 }
-const fmt=v=>(v<0?'–':'')+'USD '+Math.abs(v).toLocaleString('es-AR',{maximumFractionDigits:0});
+const fmt=v=>(v<0?'–':'')+'USD '+Math.round(Math.abs(v));
 const cc=v=>v>0?'pos':v<0?'neg':'neu';
 
 function setDoblePanelLabels(panelId, meta){
@@ -811,8 +812,8 @@ function calcular(){
       <div class="metric ${cc(mar1Propio)} highlight"><div class="mlbl">⬟ Margen — Campo propio</div><div class="mval ${cc(mar1Propio)}">${fmt(mar1Propio)}</div><div class="mnote">incl. estructura ${fmt(estUSD)}/ha</div></div>
       ${mar1Alq!==null?`<div class="metric ${cc(mar1Alq)} highlight-rent"><div class="mlbl">⬟ Margen — Campo alquilado</div><div class="mval rent">${fmt(mar1Alq)}</div><div class="mnote">${meta1.doble?margenDobleDetalle:`alquiler: ${fmt(alqAplicado)}/ha${factorAlq<1?' ('+Math.round(factorAlq*100)+'% del total)':''}`}</div></div>`:''}
       <div class="metric ${cc(mar1Propio)}"><div class="mlbl">Retorno s/ inversión</div><div class="mval ${cc(mar1Propio)}">${ren1}%</div><div class="mnote">margen ÷ (costos + estructura)</div></div>
-      <div class="metric highlight-be"><div class="mlbl">◆ Precio de indiferencia</div><div class="mval be">USD ${pbe1}</div><div class="mnote">sin comerc. · a ${r1} qq/ha</div></div>
-      <div class="metric highlight-be"><div class="mlbl">◆ Rinde de indiferencia</div><div class="mval be">${qqbe1} qq</div><div class="mnote">sin comerc. · a USD ${p1}/tn</div></div>
+      <div class="metric highlight-be"><div class="mlbl">◆ Precio de indiferencia</div><div class="mval be">USD ${pbe1}</div><div class="mnote">todos los costos · a ${r1} qq/ha</div></div>
+      <div class="metric highlight-be"><div class="mlbl">◆ Rinde de indiferencia</div><div class="mval be">${qqbe1} qq</div><div class="mnote">todos los costos · a USD ${p1}/tn</div></div>
       ${s1?`<div class="metric ${cc(mar1Propio)}"><div class="mlbl">Margen total — ${s1} ha</div><div class="mval ${cc(mar1Propio)}">${fmt(mar1Propio*s1)}</div><div class="mnote">campo propio · estimado</div></div>`:''}
       ${s1&&mar1Alq!==null?`<div class="metric ${cc(mar1Alq)}"><div class="mlbl">Margen total alquilado — ${s1} ha</div><div class="mval rent">${fmt(mar1Alq*s1)}</div><div class="mnote">con alquiler · estimado</div></div>`:''}
     </div>`;
@@ -936,10 +937,16 @@ function getCostosConPaquete(c, bloque) {
   const paq   = getPaqueteData(c, nivel);
   const deltaPaq = paq ? (paq.delta_semilla||0)+(paq.delta_fertilizacion||0)+(paq.delta_agroquimicos||0) : 0;
 
-  // Si hay km+TC ingresados, reemplazar flete largo del JSON por FETECAR
+  // Si hay km+TC: flete = corto(15km) + largo(km ingresado) reemplaza el flete del JSON
   const fleteJSON = d.flete || 0;
-  const fleteCalc = getFletelargoUSD();
-  const deltaFlete = fleteCalc !== null ? (fleteCalc - fleteJSON) : 0;
+  const km_ = parseFloat(document.getElementById('kmPuerto')?.value);
+  const tc_ = parseFloat(document.getElementById('tcBNA')?.value);
+  let deltaFlete = 0;
+  if(km_ > 0 && tc_ > 0 && FETRA) {
+    const largo = FETRA[Math.min(Math.max(Math.round(km_),1),1500)] / tc_;
+    const corto = FETRA[KM_FLETE_CORTO] / tc_;
+    deltaFlete = (largo + corto) - fleteJSON;
+  }
 
   return base + deltaPaq + deltaFlete;
 }
@@ -1181,15 +1188,17 @@ function renderCostos(cultivo){
     const delta=deltaMap[k]||0;
     const pct=totalBase>0?Math.round(v/totalBase*100):0;
 
-    // Flete largo: mostrar valor FETECAR si está activo
+    // Flete: mostrar corto + largo combinados
     let displayVal = v;
     let fleteTag = '';
     if(k === 'flete') {
-      const fleteCalc = getFletelargoUSD();
-      if(fleteCalc !== null) {
-        displayVal = +fleteCalc.toFixed(1);
-        const km_ = document.getElementById('kmPuerto')?.value;
-        fleteTag = ` <span style="font-size:8px;color:var(--accent);font-weight:400;">FeTrA ${km_}km</span>`;
+      const km_  = parseFloat(document.getElementById('kmPuerto')?.value);
+      const tc_  = parseFloat(document.getElementById('tcBNA')?.value);
+      if(km_ > 0 && tc_ > 0) {
+        const largo = +(FETRA[Math.round(km_)] / tc_).toFixed(1);
+        const corto = +(FETRA[KM_FLETE_CORTO] / tc_).toFixed(1);
+        displayVal = +(largo + corto).toFixed(1);
+        fleteTag = ` <span style="font-size:8px;color:var(--accent);font-weight:400;">FeTrA ${Math.round(km_)}+${KM_FLETE_CORTO}km</span>`;
       }
     }
     const deltaTag=delta!==0?` <span style="font-size:8px;color:${delta>0?'#88ccff':'#c890ff'};font-weight:400;">${delta>0?'+':''}${delta}</span>`:'';
@@ -1504,7 +1513,7 @@ function generarTorta(cultivo){
   const LABELS_PIE = {
     semilla:'Semillas', fertilizacion:'Fertilización',
     agroquimicos:'Agroquímicos', labranza:'Labranza & Siembra',
-    cosecha:'Cosecha & Flete corto', flete:'Flete largo',
+    cosecha:'Cosecha', flete:'Flete (corto + largo)',
     estructura:'Estructura', arrendamiento:'Arrendamiento',
   };
   const COLORS_PIE = [
@@ -1524,12 +1533,10 @@ function generarTorta(cultivo){
   // Leyenda manual
   const legEl = document.getElementById('pieLegend');
   legEl.innerHTML = labels.map((l,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></div>
-      <span style="color:var(--text-dim);flex:1;min-width:100px;">${l}</span>
-      <span style="color:var(--text);font-weight:600;white-space:nowrap;">
-        USD ${values[i].toLocaleString('es-AR')} <span style="color:var(--muted);">${Math.round(values[i]/total*100)}%</span>
-      </span>
+    <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+      <div style="width:9px;height:9px;border-radius:2px;background:${colors[i]};flex-shrink:0;"></div>
+      <span style="color:var(--accent);font-weight:600;white-space:nowrap;">${Math.round(values[i]/total*100)}%</span>
+      <span style="color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;">${l}</span>
     </div>`).join('');
 
   document.getElementById('pieWrap').style.display='block';
